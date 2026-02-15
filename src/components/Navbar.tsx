@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, BookOpen, Wallet, ShoppingCart, Layers, PieChart } from "lucide-react";
-import twinFlameLogo from "@/assets/twinflame-logo.png";
+import twinFlameLogo from "@/assets/twinflame-logo.PNG";
 import { Link } from "react-router-dom";
 import { useWallet } from "@/hooks/useWallet";
 import { Button } from "@/components/ui/button";
