@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Menu, X } from "lucide-react";
+import { Flame, Menu, X, BookOpen } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const navLinks = [
   { label: "Tokens", href: "#tokens" },
@@ -35,6 +36,13 @@ const Navbar = () => {
               {link.label}
             </a>
           ))}
+          <Link
+            to="/whitepaper"
+            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            Whitepaper
+          </Link>
           <a
             href="#tokens"
             className="rounded-lg bg-gradient-fire px-5 py-2 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90"
@@ -67,6 +75,14 @@ const Navbar = () => {
                   {link.label}
                 </a>
               ))}
+              <Link
+                to="/whitepaper"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                Whitepaper
+              </Link>
               <a
                 href="#tokens"
                 onClick={() => setOpen(false)}
