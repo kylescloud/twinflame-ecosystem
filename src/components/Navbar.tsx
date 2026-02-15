@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Menu, X, BookOpen } from "lucide-react";
+import { Flame, Menu, X, BookOpen, Wallet, ShoppingCart, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useWallet } from "@/hooks/useWallet";
+import { Button } from "@/components/ui/button";
 
 const navLinks = [
   { label: "Tokens", href: "#tokens" },
@@ -9,6 +11,39 @@ const navLinks = [
   { label: "Roadmap", href: "#roadmap" },
   { label: "Why TwinFlame", href: "#why" },
 ];
+
+const pageLinks = [
+  { label: "Buy", to: "/buy", icon: ShoppingCart },
+  { label: "Staking", to: "/staking", icon: Layers },
+  { label: "Whitepaper", to: "/whitepaper", icon: BookOpen },
+];
+
+const ConnectWalletButton = ({ className }: { className?: string }) => {
+  const { address, shortAddress, isConnecting, connect, disconnect, hasWallet } = useWallet();
+
+  if (address) {
+    return (
+      <button
+        onClick={disconnect}
+        className={`flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition-all hover:bg-primary/20 ${className}`}
+      >
+        <Wallet className="h-3.5 w-3.5" />
+        {shortAddress}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={connect}
+      disabled={isConnecting}
+      className={`flex items-center gap-2 rounded-lg bg-gradient-fire px-4 py-2 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-60 ${className}`}
+    >
+      <Wallet className="h-3.5 w-3.5" />
+      {isConnecting ? "Connecting…" : hasWallet ? "Connect Wallet" : "Install MetaMask"}
+    </button>
+  );
+};
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -21,12 +56,12 @@ const Navbar = () => {
       className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl"
     >
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
-        <a href="#" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           <Flame className="h-7 w-7 text-primary" />
           <span className="font-display text-xl font-bold text-gradient-fire">TwinFlame</span>
-        </a>
+        </Link>
 
-        <div className="hidden items-center gap-8 md:flex">
+        <div className="hidden items-center gap-6 md:flex">
           {navLinks.map((link) => (
             <a
               key={link.href}
@@ -36,19 +71,17 @@ const Navbar = () => {
               {link.label}
             </a>
           ))}
-          <Link
-            to="/whitepaper"
-            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <BookOpen className="h-3.5 w-3.5" />
-            Whitepaper
-          </Link>
-          <a
-            href="#tokens"
-            className="rounded-lg bg-gradient-fire px-5 py-2 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90"
-          >
-            Get Started
-          </a>
+          {pageLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <link.icon className="h-3.5 w-3.5" />
+              {link.label}
+            </Link>
+          ))}
+          <ConnectWalletButton />
         </div>
 
         <button onClick={() => setOpen(!open)} className="text-foreground md:hidden">
@@ -75,21 +108,18 @@ const Navbar = () => {
                   {link.label}
                 </a>
               ))}
-              <Link
-                to="/whitepaper"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                Whitepaper
-              </Link>
-              <a
-                href="#tokens"
-                onClick={() => setOpen(false)}
-                className="rounded-lg bg-gradient-fire px-5 py-2.5 text-center text-sm font-semibold text-primary-foreground"
-              >
-                Get Started
-              </a>
+              {pageLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <link.icon className="h-3.5 w-3.5" />
+                  {link.label}
+                </Link>
+              ))}
+              <ConnectWalletButton className="justify-center" />
             </div>
           </motion.div>
         )}
