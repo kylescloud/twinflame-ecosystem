@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/useWallet";
 import Navbar from "@/components/Navbar";
 import EmberParticles from "@/components/EmberParticles";
+import PriceChart from "@/components/PriceChart";
 
 const TOKEN_PRICES = { BLAZE: 0.20, EQT: 5.00 };
 
@@ -99,6 +100,12 @@ const Buy = () => {
             Purchase BLAZE or EQT to participate in the TwinFlame ecosystem.
           </p>
         </motion.div>
+
+        {/* Price Charts */}
+        <div className="mx-auto mb-10 grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
+          <PriceChart token="BLAZE" basePrice={0.20} color="hsl(25, 95%, 53%)" gradientId="blazeGrad" />
+          <PriceChart token="EQT" basePrice={5.00} color="hsl(200, 80%, 55%)" gradientId="eqtGrad" />
+        </div>
 
         <Tabs defaultValue="blaze" className="mx-auto max-w-2xl">
           <TabsList className="mb-8 grid w-full grid-cols-2 bg-muted/50">

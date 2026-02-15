@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Menu, X, BookOpen, Wallet, ShoppingCart, Layers } from "lucide-react";
+import { Flame, Menu, X, BookOpen, Wallet, ShoppingCart, Layers, PieChart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useWallet } from "@/hooks/useWallet";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ const pageLinks = [
   { label: "Buy", to: "/buy", icon: ShoppingCart },
   { label: "Staking", to: "/staking", icon: Layers },
   { label: "Whitepaper", to: "/whitepaper", icon: BookOpen },
+  { label: "Portfolio", to: "/portfolio", icon: PieChart },
 ];
 
 const ConnectWalletButton = ({ className }: { className?: string }) => {
