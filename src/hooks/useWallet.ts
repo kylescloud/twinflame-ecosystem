@@ -1,105 +1,221 @@
-import { useState, useCallback, useEffect } from "react";
-import { BrowserProvider, formatEther } from "ethers";
+import { useState, useEffect, useCallback } from 'react';
 
-interface WalletState {
+export interface WalletState {
+  isConnected: boolean;
   address: string | null;
-  balance: string | null;
+  shortAddress: string | null;
   chainId: number | null;
-  isConnecting: boolean;
+  balance: string | null;
   error: string | null;
+  isConnecting: boolean;
+  hasWallet: boolean;
 }
 
-const POLYGON_CHAIN_ID = 137;
-const POLYGON_PARAMS = {
-  chainId: "0x89",
-  chainName: "Polygon Mainnet",
-  nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
-  rpcUrls: ["https://polygon-rpc.com"],
-  blockExplorerUrls: ["https://polygonscan.com"],
-};
+declare global {
+  interface Window {
+    ethereum?: {
+      isMetaMask?: boolean;
+      request: (args: { method: string; params?: any[] }) => Promise<any>;
+      on: (event: string, callback: (...args: any[]) => void) => void;
+      removeListener: (event: string, callback: (...args: any[]) => void) => void;
+    };
+  }
+}
 
-export function useWallet() {
-  const [wallet, setWallet] = useState<WalletState>({
+export const useWallet = () => {
+  const [walletState, setWalletState] = useState<WalletState>({
+    isConnected: false,
     address: null,
-    balance: null,
+    shortAddress: null,
     chainId: null,
-    isConnecting: false,
+    balance: null,
     error: null,
+    isConnecting: false,
+    hasWallet: false,
   });
 
-  const getProvider = useCallback(() => {
-    if (typeof window !== "undefined" && (window as any).ethereum) {
-      return new BrowserProvider((window as any).ethereum);
-    }
-    return null;
+  const formatAddress = useCallback((address: string): string => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   }, []);
 
-  const fetchBalance = useCallback(async (address: string) => {
-    const provider = getProvider();
-    if (!provider) return null;
-    const balance = await provider.getBalance(address);
-    return parseFloat(formatEther(balance)).toFixed(4);
-  }, [getProvider]);
-
-  const switchToPolygon = useCallback(async () => {
-    const eth = (window as any).ethereum;
-    if (!eth) return;
+  const getBalance = useCallback(async (address: string): Promise<string | null> => {
     try {
-      await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: POLYGON_PARAMS.chainId }] });
-    } catch (err: any) {
-      if (err.code === 4902) {
-        await eth.request({ method: "wallet_addEthereumChain", params: [POLYGON_PARAMS] });
-      }
+      if (!window.ethereum) return null;
+      const balance = await window.ethereum.request({
+        method: 'eth_getBalance',
+        params: [address, 'latest'],
+      });
+      return balance;
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+      return null;
     }
   }, []);
 
   const connect = useCallback(async () => {
-    const eth = (window as any).ethereum;
-    if (!eth) {
-      setWallet((s) => ({ ...s, error: "No wallet detected. Please install MetaMask." }));
-      return;
-    }
-    setWallet((s) => ({ ...s, isConnecting: true, error: null }));
+    setWalletState(prev => ({ ...prev, isConnecting: true, error: null }));
+
     try {
-      const accounts: string[] = await eth.request({ method: "eth_requestAccounts" });
-      const chainId = parseInt(await eth.request({ method: "eth_chainId" }), 16);
-      if (chainId !== POLYGON_CHAIN_ID) await switchToPolygon();
-      const balance = await fetchBalance(accounts[0]);
-      setWallet({ address: accounts[0], balance, chainId: POLYGON_CHAIN_ID, isConnecting: false, error: null });
-    } catch (err: any) {
-      setWallet((s) => ({ ...s, isConnecting: false, error: err?.message || "Connection failed" }));
+      if (typeof window !== 'undefined' && window.ethereum) {
+        const accounts = await window.ethereum.request({
+          method: 'eth_requestAccounts',
+        });
+
+        if (accounts.length === 0) {
+          throw new Error('No accounts found');
+        }
+
+        const chainId = await window.ethereum.request({
+          method: 'eth_chainId',
+        });
+
+        const address = accounts[0];
+        const balance = await getBalance(address);
+
+        setWalletState({
+          isConnected: true,
+          address,
+          shortAddress: formatAddress(address),
+          chainId: parseInt(chainId, 16),
+          balance,
+          error: null,
+          isConnecting: false,
+          hasWallet: true,
+        });
+      } else {
+        setWalletState(prev => ({
+          ...prev,
+          error: 'Please install MetaMask or another Web3 wallet',
+          isConnecting: false,
+          hasWallet: false,
+        }));
+      }
+    } catch (error: any) {
+      console.error('Error connecting wallet:', error);
+      setWalletState(prev => ({
+        ...prev,
+        error: error.message || 'Failed to connect wallet',
+        isConnecting: false,
+      }));
     }
-  }, [fetchBalance, switchToPolygon]);
+  }, [formatAddress, getBalance]);
 
   const disconnect = useCallback(() => {
-    setWallet({ address: null, balance: null, chainId: null, isConnecting: false, error: null });
+    setWalletState({
+      isConnected: false,
+      address: null,
+      shortAddress: null,
+      chainId: null,
+      balance: null,
+      error: null,
+      isConnecting: false,
+      hasWallet: typeof window !== 'undefined' && !!window.ethereum,
+    });
   }, []);
 
-  const shortAddress = wallet.address
-    ? `${wallet.address.slice(0, 6)}…${wallet.address.slice(-4)}`
-    : null;
-
+  // Check if wallet is available and already connected on mount
   useEffect(() => {
-    const eth = (window as any).ethereum;
-    if (!eth) return;
-    const handleAccounts = (accounts: string[]) => {
-      if (accounts.length === 0) disconnect();
-      else {
-        fetchBalance(accounts[0]).then((balance) =>
-          setWallet((s) => ({ ...s, address: accounts[0], balance }))
-        );
+    const checkWalletAvailability = () => {
+      const hasWallet = typeof window !== 'undefined' && !!window.ethereum;
+      setWalletState(prev => ({ ...prev, hasWallet }));
+    };
+
+    checkWalletAvailability();
+
+    const checkConnection = async () => {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({
+            method: 'eth_accounts',
+          });
+
+          if (accounts.length > 0) {
+            const chainId = await window.ethereum.request({
+              method: 'eth_chainId',
+            });
+
+            const address = accounts[0];
+            const balance = await getBalance(address);
+
+            setWalletState({
+              isConnected: true,
+              address,
+              shortAddress: formatAddress(address),
+              chainId: parseInt(chainId, 16),
+              balance,
+              error: null,
+              isConnecting: false,
+              hasWallet: true,
+            });
+          }
+        } catch (error) {
+          console.error('Error checking wallet connection:', error);
+        }
       }
     };
-    const handleChain = (chainId: string) => {
-      setWallet((s) => ({ ...s, chainId: parseInt(chainId, 16) }));
-    };
-    eth.on("accountsChanged", handleAccounts);
-    eth.on("chainChanged", handleChain);
-    return () => {
-      eth.removeListener("accountsChanged", handleAccounts);
-      eth.removeListener("chainChanged", handleChain);
-    };
-  }, [disconnect, fetchBalance]);
 
-  return { ...wallet, shortAddress, connect, disconnect, hasWallet: !!(window as any)?.ethereum };
-}
+    checkConnection();
+
+    // Listen for account and chain changes
+    if (typeof window !== 'undefined' && window.ethereum) {
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts.length === 0) {
+          disconnect();
+        } else {
+          const address = accounts[0];
+          setWalletState(prev => ({
+            ...prev,
+            address,
+            shortAddress: formatAddress(address),
+            isConnected: true,
+            error: null,
+          }));
+
+          // Fetch updated balance
+          getBalance(address).then(balance => {
+            if (balance !== null) {
+              setWalletState(prev => ({ ...prev, balance }));
+            }
+          });
+        }
+      };
+
+      const handleChainChanged = (chainId: string) => {
+        setWalletState(prev => ({
+          ...prev,
+          chainId: parseInt(chainId, 16),
+        }));
+
+        // Reload the page to reset the app state
+        window.location.reload();
+      };
+
+      const handleConnect = () => {
+        setWalletState(prev => ({ ...prev, hasWallet: true }));
+      };
+
+      const handleDisconnect = (error: { code: number; message: string }) => {
+        console.log('Wallet disconnected:', error);
+        disconnect();
+      };
+
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      window.ethereum.on('chainChanged', handleChainChanged);
+      window.ethereum.on('connect', handleConnect);
+      window.ethereum.on('disconnect', handleDisconnect);
+
+      return () => {
+        window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
+        window.ethereum?.removeListener('chainChanged', handleChainChanged);
+        window.ethereum?.removeListener('connect', handleConnect);
+        window.ethereum?.removeListener('disconnect', handleDisconnect);
+      };
+    }
+  }, [formatAddress, getBalance, disconnect]);
+
+  return {
+    ...walletState,
+    connect,
+    disconnect,
+  };
+};
