@@ -59,7 +59,7 @@ const EmberParticles = () => {
         p.y += p.speedY;
         p.life++;
 
-        const lifeRatio = 1 - p.life / p.maxLife;
+        const lifeRatio = Math.max(0, 1 - p.life / p.maxLife);
         const alpha = p.opacity * lifeRatio;
 
         // Glow
