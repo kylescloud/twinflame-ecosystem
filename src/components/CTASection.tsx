@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Flame } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const CTASection = () => {
   return (
@@ -29,12 +30,12 @@ const CTASection = () => {
               Join the Ecosystem
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </a>
-            <a
-              href="#"
+            <Link
+              to="/whitepaper"
               className="rounded-lg border border-border bg-muted/30 px-8 py-3.5 font-display text-sm font-semibold text-foreground backdrop-blur-sm transition-all hover:bg-muted/50"
             >
               Read Whitepaper
-            </a>
+            </Link>
           </div>
         </motion.div>
       </div>
