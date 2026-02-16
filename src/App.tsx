@@ -8,6 +8,7 @@ import Whitepaper from "./pages/Whitepaper";
 import Buy from "./pages/Buy";
 import Staking from "./pages/Staking";
 import Portfolio from "./pages/Portfolio";
+import Swap from "./pages/Swap";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/buy" element={<Buy />} />
           <Route path="/staking" element={<Staking />} />
           <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/swap" element={<Swap />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
