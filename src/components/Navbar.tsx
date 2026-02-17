@@ -6,10 +6,10 @@ import { useWallet } from "@/hooks/useWallet";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
-  { label: "Tokens", href: "#tokens" },
-  { label: "Ecosystem", href: "#ecosystem" },
-  { label: "Roadmap", href: "#roadmap" },
-  { label: "Why TwinFlame", href: "#why" },
+  { label: "Tokens", href: "/#tokens" },
+  { label: "Ecosystem", href: "/#ecosystem" },
+  { label: "Roadmap", href: "/#roadmap" },
+  { label: "Why TwinFlame", href: "/#why" },
 ];
 
 const pageLinks = [
