@@ -14,26 +14,27 @@ import Navbar from "@/components/Navbar";
 import EmberParticles from "@/components/EmberParticles";
 import { useToast } from "@/hooks/use-toast";
 
-const MOCK_PORTFOLIO = {
-  blaze: { balance: 12500, staked: 8000, price: 0.2, change24h: 3.2 },
-  ember: { balance: 45000, price: 0.05, change24h: -1.1 },
-  eqt: { balance: 150, price: 5.0, change24h: 0.8 },
+// Placeholder contract addresses — replace with real deployed addresses
+const CONTRACT_ADDRESSES: Record<string, string> = {
+  BLAZE: "0x0000000000000000000000000000000000000001",
+  EMBER: "0x0000000000000000000000000000000000000002",
+  EQT: "0x0000000000000000000000000000000000000003",
 };
 
-const MOCK_HISTORY = Array.from({ length: 30 }, (_, i) => {
-  const d = new Date();
-  d.setDate(d.getDate() - (29 - i));
-  const base = 4200 + i * 45 + (Math.random() - 0.4) * 300;
-  return { date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), value: parseFloat(base.toFixed(2)) };
-});
+const getPolygonscanTokenUrl = (contract: string) =>
+  `https://polygonscan.com/token/${contract}`;
 
-const MOCK_TRANSACTIONS = [
-  { type: "Stake", token: "BLAZE", amount: 2000, date: "Feb 12, 2026", icon: Flame },
-  { type: "Claimed", token: "EMBER", amount: 1500, date: "Feb 10, 2026", icon: Zap },
-  { type: "Buy", token: "EQT", amount: 50, date: "Feb 8, 2026", icon: Shield },
-  { type: "Dividend", token: "USDC", amount: 125, date: "Jan 31, 2026", icon: ArrowUpRight },
-  { type: "Buy", token: "BLAZE", amount: 5000, date: "Jan 25, 2026", icon: Flame },
-];
+const getPolygonscanTxUrl = (txHash: string) =>
+  `https://polygonscan.com/tx/${txHash}`;
+
+export interface PortfolioTransaction {
+  type: string;
+  token: string;
+  amount: number;
+  date: string;
+  txHash: string;
+  icon: typeof Flame;
+}
 
 const PIE_COLORS = ["hsl(25, 95%, 53%)", "hsl(38, 90%, 55%)", "hsl(200, 80%, 55%)"];
 
@@ -67,6 +68,7 @@ const Portfolio = () => {
   const { address, shortAddress, balance, connect, disconnect, isConnecting } = useWallet();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [transactions] = useState<PortfolioTransaction[]>([]);
 
   const copyAddress = () => {
     if (!address) return;
@@ -76,30 +78,40 @@ const Portfolio = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const totalValue =
-    MOCK_PORTFOLIO.blaze.balance * MOCK_PORTFOLIO.blaze.price +
-    MOCK_PORTFOLIO.ember.balance * MOCK_PORTFOLIO.ember.price +
-    MOCK_PORTFOLIO.eqt.balance * MOCK_PORTFOLIO.eqt.price;
+  // Until smart contracts are connected, balances default to 0
+  const tokenData = {
+    BLAZE: { balance: 0, staked: 0, price: 0, change24h: 0 },
+    EMBER: { balance: 0, price: 0, change24h: 0 },
+    EQT: { balance: 0, price: 0, change24h: 0 },
+  };
 
-  const stakedValue = MOCK_PORTFOLIO.blaze.staked * MOCK_PORTFOLIO.blaze.price;
+  const totalValue =
+    tokenData.BLAZE.balance * tokenData.BLAZE.price +
+    tokenData.EMBER.balance * tokenData.EMBER.price +
+    tokenData.EQT.balance * tokenData.EQT.price;
+
+  const stakedValue = tokenData.BLAZE.staked * tokenData.BLAZE.price;
 
   const pieData = [
-    { name: "BLAZE", value: MOCK_PORTFOLIO.blaze.balance * MOCK_PORTFOLIO.blaze.price },
-    { name: "EMBER", value: MOCK_PORTFOLIO.ember.balance * MOCK_PORTFOLIO.ember.price },
-    { name: "EQT", value: MOCK_PORTFOLIO.eqt.balance * MOCK_PORTFOLIO.eqt.price },
+    { name: "BLAZE", value: tokenData.BLAZE.balance * tokenData.BLAZE.price },
+    { name: "EMBER", value: tokenData.EMBER.balance * tokenData.EMBER.price },
+    { name: "EQT", value: tokenData.EQT.balance * tokenData.EQT.price },
   ];
 
   const holdings = [
-    { token: "BLAZE", icon: Flame, balance: MOCK_PORTFOLIO.blaze.balance, staked: MOCK_PORTFOLIO.blaze.staked, price: MOCK_PORTFOLIO.blaze.price, change: MOCK_PORTFOLIO.blaze.change24h, colorClass: "text-primary", bgClass: "bg-primary/10" },
-    { token: "EMBER", icon: Zap, balance: MOCK_PORTFOLIO.ember.balance, staked: 0, price: MOCK_PORTFOLIO.ember.price, change: MOCK_PORTFOLIO.ember.change24h, colorClass: "text-accent", bgClass: "bg-accent/10" },
-    { token: "EQT", icon: Shield, balance: MOCK_PORTFOLIO.eqt.balance, staked: 0, price: MOCK_PORTFOLIO.eqt.price, change: MOCK_PORTFOLIO.eqt.change24h, colorClass: "text-[hsl(var(--equity))]", bgClass: "bg-[hsl(var(--equity))/0.1]" },
+    { token: "BLAZE", icon: Flame, balance: tokenData.BLAZE.balance, staked: tokenData.BLAZE.staked, price: tokenData.BLAZE.price, change: tokenData.BLAZE.change24h, colorClass: "text-primary", bgClass: "bg-primary/10" },
+    { token: "EMBER", icon: Zap, balance: tokenData.EMBER.balance, staked: 0, price: tokenData.EMBER.price, change: tokenData.EMBER.change24h, colorClass: "text-accent", bgClass: "bg-accent/10" },
+    { token: "EQT", icon: Shield, balance: tokenData.EQT.balance, staked: 0, price: tokenData.EQT.price, change: tokenData.EQT.change24h, colorClass: "text-[hsl(var(--equity))]", bgClass: "bg-[hsl(var(--equity))/0.1]" },
   ];
 
   const summaryCards = [
-    { label: "Total Value", value: `$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, icon: BarChart3, sub: "+8.4% (30d)" },
-    { label: "Staked Value", value: `$${stakedValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, icon: TrendingUp, sub: "8,000 BLAZE locked" },
-    { label: "Pending Rewards", value: "1,245 EMBER", icon: Zap, sub: "≈ $62.25" },
+    { label: "Total Value", value: `$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, icon: BarChart3, sub: "Connect contracts to sync" },
+    { label: "Staked Value", value: `$${stakedValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, icon: TrendingUp, sub: `${tokenData.BLAZE.staked.toLocaleString()} BLAZE locked` },
+    { label: "Pending Rewards", value: "0 EMBER", icon: Zap, sub: "≈ $0.00" },
   ];
+
+  // Empty history until on-chain data is connected
+  const historyData: { date: string; value: number }[] = [];
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
@@ -130,7 +142,7 @@ const Portfolio = () => {
                       <div className="flex items-center gap-2">
                         <p className="font-display text-lg font-bold text-foreground">{shortAddress}</p>
                         <button onClick={copyAddress} className="text-muted-foreground hover:text-foreground transition-colors">
-                          {copied ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
+                          {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
                         </button>
                         <a href={`https://polygonscan.com/address/${address}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
                           <ExternalLink className="h-3.5 w-3.5" />
@@ -170,22 +182,28 @@ const Portfolio = () => {
                 <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
                   <CardHeader><CardTitle className="text-base">Portfolio Value (30D)</CardTitle></CardHeader>
                   <CardContent>
-                    <div className="h-[250px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={MOCK_HISTORY} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="portfolioGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="hsl(25, 95%, 53%)" stopOpacity={0.3} />
-                              <stop offset="100%" stopColor="hsl(25, 95%, 53%)" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(38 5% 50%)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                          <YAxis tick={{ fontSize: 10, fill: "hsl(38 5% 50%)" }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`} />
-                          <Tooltip content={<PortfolioTooltip />} />
-                          <Area type="monotone" dataKey="value" stroke="hsl(25, 95%, 53%)" strokeWidth={2} fill="url(#portfolioGrad)" animationDuration={1500} />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
+                    {historyData.length > 0 ? (
+                      <div className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={historyData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                            <defs>
+                              <linearGradient id="portfolioGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="hsl(25, 95%, 53%)" stopOpacity={0.3} />
+                                <stop offset="100%" stopColor="hsl(25, 95%, 53%)" stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+                            <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(38 5% 50%)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                            <YAxis tick={{ fontSize: 10, fill: "hsl(38 5% 50%)" }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`} />
+                            <Tooltip content={<PortfolioTooltip />} />
+                            <Area type="monotone" dataKey="value" stroke="hsl(25, 95%, 53%)" strokeWidth={2} fill="url(#portfolioGrad)" animationDuration={1500} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <div className="flex h-[250px] items-center justify-center text-sm text-muted-foreground">
+                        No portfolio history yet — data will populate once contracts are connected.
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -194,34 +212,42 @@ const Portfolio = () => {
                 <Card className="border-border/50 bg-card/80 backdrop-blur-sm h-full">
                   <CardHeader><CardTitle className="text-base">Allocation</CardTitle></CardHeader>
                   <CardContent className="flex flex-col items-center">
-                    <div className="h-[160px] w-[160px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={pieData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" animationDuration={1200} stroke="none">
-                            {pieData.map((_, i) => (
-                              <Cell key={i} fill={PIE_COLORS[i]} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="mt-4 flex flex-col gap-2 w-full">
-                      {pieData.map((d, i) => (
-                        <div key={d.name} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i] }} />
-                            <span className="text-muted-foreground">{d.name}</span>
-                          </div>
-                          <span className="font-semibold">{((d.value / totalValue) * 100).toFixed(1)}%</span>
+                    {totalValue > 0 ? (
+                      <>
+                        <div className="h-[160px] w-[160px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie data={pieData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" animationDuration={1200} stroke="none">
+                                {pieData.map((_, i) => (
+                                  <Cell key={i} fill={PIE_COLORS[i]} />
+                                ))}
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
                         </div>
-                      ))}
-                    </div>
+                        <div className="mt-4 flex flex-col gap-2 w-full">
+                          {pieData.map((d, i) => (
+                            <div key={d.name} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2">
+                                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i] }} />
+                                <span className="text-muted-foreground">{d.name}</span>
+                              </div>
+                              <span className="font-semibold">{((d.value / totalValue) * 100).toFixed(1)}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex h-[200px] items-center justify-center text-sm text-muted-foreground text-center">
+                        No tokens held yet.
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
             </div>
 
-            {/* Holdings */}
+            {/* Holdings with Polygonscan contract links */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
                 <CardHeader><CardTitle className="text-base">Holdings</CardTitle></CardHeader>
@@ -234,7 +260,18 @@ const Portfolio = () => {
                             <h.icon className={`h-4 w-4 ${h.colorClass}`} />
                           </div>
                           <div>
-                            <p className="font-semibold">{h.token}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-semibold">{h.token}</p>
+                              <a
+                                href={getPolygonscanTokenUrl(CONTRACT_ADDRESSES[h.token])}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-muted-foreground hover:text-primary transition-colors"
+                                title={`View ${h.token} contract on Polygonscan`}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </div>
                             <p className="text-xs text-muted-foreground">
                               {h.balance.toLocaleString()} tokens{h.staked > 0 && ` · ${h.staked.toLocaleString()} staked`}
                             </p>
@@ -242,7 +279,7 @@ const Portfolio = () => {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold">${(h.balance * h.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                          <p className={`flex items-center justify-end gap-0.5 text-xs font-medium ${h.change >= 0 ? "text-green-400" : "text-destructive"}`}>
+                          <p className={`flex items-center justify-end gap-0.5 text-xs font-medium ${h.change >= 0 ? "text-primary" : "text-destructive"}`}>
                             {h.change >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                             {Math.abs(h.change)}%
                           </p>
@@ -254,29 +291,48 @@ const Portfolio = () => {
               </Card>
             </motion.div>
 
-            {/* Recent Transactions */}
+            {/* Recent Transactions — linked to Polygonscan */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
               <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
                 <CardHeader><CardTitle className="text-base">Recent Activity</CardTitle></CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {MOCK_TRANSACTIONS.map((tx, i) => (
-                      <div key={i} className="flex items-center justify-between border-b border-border/20 pb-3 last:border-0 last:pb-0">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/50">
-                            <tx.icon className="h-3.5 w-3.5 text-primary" />
+                  {transactions.length > 0 ? (
+                    <div className="space-y-3">
+                      {transactions.map((tx, i) => (
+                        <div key={i} className="flex items-center justify-between border-b border-border/20 pb-3 last:border-0 last:pb-0">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/50">
+                              <tx.icon className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{tx.type}</p>
+                              <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3" />{tx.date}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-medium">{tx.type}</p>
-                            <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Clock className="h-3 w-3" />{tx.date}
-                            </p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold">{tx.amount.toLocaleString()} {tx.token}</span>
+                            <a
+                              href={getPolygonscanTxUrl(tx.txHash)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-muted-foreground hover:text-primary transition-colors"
+                              title="View on Polygonscan"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
                           </div>
                         </div>
-                        <span className="text-sm font-semibold">{tx.amount.toLocaleString()} {tx.token}</span>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 py-8 text-center">
+                      <Clock className="h-8 w-8 text-muted-foreground/50" />
+                      <p className="text-sm text-muted-foreground">No transactions yet</p>
+                      <p className="text-xs text-muted-foreground">Your on-chain activity will appear here once you start trading.</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
