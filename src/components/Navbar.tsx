@@ -21,7 +21,7 @@ const pageLinks = [
 ];
 
 const ConnectWalletButton = ({ className }: { className?: string }) => {
-  const { address, shortAddress, isConnecting, connect, disconnect, hasWallet } = useWallet();
+  const { address, shortAddress, isConnecting, connect, disconnect } = useWallet();
 
   if (address) {
     return (
@@ -42,7 +42,7 @@ const ConnectWalletButton = ({ className }: { className?: string }) => {
       className={`flex items-center gap-2 rounded-lg bg-gradient-fire px-4 py-2 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-60 ${className}`}
     >
       <Wallet className="h-3.5 w-3.5" />
-      {isConnecting ? "Connecting…" : hasWallet ? "Connect Wallet" : "Install MetaMask"}
+      {isConnecting ? "Connecting…" : "Connect Wallet"}
     </button>
   );
 };

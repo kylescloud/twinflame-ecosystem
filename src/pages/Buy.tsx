@@ -16,7 +16,7 @@ const TOKEN_PRICES = { BLAZE: 0.20, EQT: 5.00 };
 const BuyTokenCard = ({ token, color, icon: Icon, price, features }: {
   token: string; color: string; icon: any; price: number; features: string[];
 }) => {
-  const { address } = useWallet();
+  const { address, connect } = useWallet();
   const [amount, setAmount] = useState("");
   const cost = parseFloat(amount || "0") * price;
 
@@ -63,9 +63,10 @@ const BuyTokenCard = ({ token, color, icon: Icon, price, features }: {
           <Button
             className="w-full bg-gradient-fire text-primary-foreground font-semibold"
             size="lg"
-            disabled={!address || !amount || parseFloat(amount) <= 0}
+            onClick={!address ? connect : undefined}
+            disabled={address ? (!amount || parseFloat(amount) <= 0) : false}
           >
-            {!address ? "Connect Wallet First" : `Buy ${amount || 0} ${token}`}
+            {!address ? "Connect Wallet" : `Buy ${amount || 0} ${token}`}
           </Button>
 
           {token === "EQT" && (

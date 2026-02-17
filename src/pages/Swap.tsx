@@ -47,7 +47,7 @@ const timeAgo = (d: Date) => {
 };
 
 const Swap = () => {
-  const { address, connect, isConnecting, hasWallet } = useWallet();
+  const { address, connect, isConnecting } = useWallet();
   const { toast } = useToast();
   const [direction, setDirection] = useState<Direction>("blazeToEmber");
   const [inputAmount, setInputAmount] = useState("");
@@ -268,7 +268,7 @@ const Swap = () => {
                   className="w-full bg-gradient-fire text-primary-foreground hover:opacity-90"
                   size="lg"
                 >
-                  {isConnecting ? "Connecting…" : hasWallet ? "Connect Wallet to Swap" : "Install MetaMask"}
+                  {isConnecting ? "Connecting…" : "Connect Wallet to Swap"}
                 </Button>
               ) : (
                 <Button
