@@ -19,7 +19,7 @@ const MOCK_STATS = {
 };
 
 const Staking = () => {
-  const { address } = useWallet();
+  const { address, connect } = useWallet();
   const [stakeAmount, setStakeAmount] = useState("");
   const [unstakeAmount, setUnstakeAmount] = useState("");
 
@@ -135,9 +135,10 @@ const Staking = () => {
                 <Button
                   className="w-full bg-gradient-fire text-primary-foreground font-semibold"
                   size="lg"
-                  disabled={!address || !stakeAmount || parseFloat(stakeAmount) <= 0}
+                  onClick={!address ? connect : undefined}
+                  disabled={address ? (!stakeAmount || parseFloat(stakeAmount) <= 0) : false}
                 >
-                  {!address ? "Connect Wallet First" : "Stake BLAZE"}
+                  {!address ? "Connect Wallet" : "Stake BLAZE"}
                 </Button>
               </CardContent>
             </Card>

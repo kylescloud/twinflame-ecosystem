@@ -47,7 +47,7 @@ const PortfolioTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-const NotConnected = ({ onConnect, isConnecting, hasWallet }: { onConnect: () => void; isConnecting: boolean; hasWallet: boolean }) => (
+const NotConnected = ({ onConnect, isConnecting }: { onConnect: () => void; isConnecting: boolean }) => (
   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-6 py-32 text-center">
     <div className="flex h-20 w-20 items-center justify-center rounded-full border border-border/50 bg-muted/50">
       <Wallet className="h-10 w-10 text-muted-foreground" />
@@ -58,13 +58,13 @@ const NotConnected = ({ onConnect, isConnecting, hasWallet }: { onConnect: () =>
     </div>
     <Button onClick={onConnect} disabled={isConnecting} className="bg-gradient-fire text-primary-foreground hover:opacity-90" size="lg">
       <Wallet className="mr-2 h-4 w-4" />
-      {isConnecting ? "Connecting…" : hasWallet ? "Connect Wallet" : "Install MetaMask"}
+      {isConnecting ? "Connecting…" : "Connect Wallet"}
     </Button>
   </motion.div>
 );
 
 const Portfolio = () => {
-  const { address, shortAddress, balance, connect, disconnect, isConnecting, hasWallet } = useWallet();
+  const { address, shortAddress, balance, connect, disconnect, isConnecting } = useWallet();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
@@ -114,7 +114,7 @@ const Portfolio = () => {
         </motion.div>
 
         {!address ? (
-          <NotConnected onConnect={connect} isConnecting={isConnecting} hasWallet={hasWallet} />
+          <NotConnected onConnect={connect} isConnecting={isConnecting} />
         ) : (
           <div className="mx-auto max-w-5xl space-y-8">
             {/* Wallet Banner */}

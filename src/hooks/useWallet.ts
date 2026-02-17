@@ -101,5 +101,5 @@ export function useWallet() {
     };
   }, [disconnect, fetchBalance]);
 
-  return { ...wallet, shortAddress, connect, disconnect, hasWallet: !!(window as any)?.ethereum };
+  return { ...wallet, shortAddress, connect, disconnect };
 }
