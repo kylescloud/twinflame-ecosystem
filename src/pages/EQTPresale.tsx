@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, ArrowRight, Lock, DollarSign, Users, Vote, Calendar, TrendingUp, CheckCircle, Coins, PieChart, Clock } from "lucide-react";
+import { Shield, ArrowRight, Lock, DollarSign, Users, Vote, Calendar, TrendingUp, CheckCircle, Coins, PieChart, Clock, BadgeCheck, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/useWallet";
 import Navbar from "@/components/Navbar";
 import EmberParticles from "@/components/EmberParticles";
+import KYCVerificationModal, { type KYCStatus } from "@/components/KYCVerificationModal";
 
 const PRESALE_PRICE = 3.50;
 const LAUNCH_PRICE = 5.00;
@@ -65,9 +66,20 @@ const TIMELINE = [
 const EQTPresale = () => {
   const { address, connect } = useWallet();
   const [amount, setAmount] = useState("");
+  const [kycStatus, setKycStatus] = useState<KYCStatus>("unverified");
+  const [kycOpen, setKycOpen] = useState(false);
   const qty = parseFloat(amount || "0");
   const cost = qty * PRESALE_PRICE;
   const savings = qty * (LAUNCH_PRICE - PRESALE_PRICE);
+
+  const handleBuyClick = () => {
+    if (!address) {
+      connect();
+    } else if (kycStatus === "unverified") {
+      setKycOpen(true);
+    }
+    // if verified, would proceed to purchase; if pending, button is disabled
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
@@ -165,21 +177,43 @@ const EQTPresale = () => {
                   )}
                 </div>
 
+                {/* KYC Status Badge */}
+                {address && kycStatus === "verified" && (
+                  <div className="flex items-center gap-2 rounded-lg border border-[hsl(var(--equity))]/30 bg-equity/10 p-3">
+                    <BadgeCheck className="h-4 w-4 text-[hsl(var(--equity))]" />
+                    <span className="text-sm font-medium text-[hsl(var(--equity))]">KYC Verified</span>
+                  </div>
+                )}
+                {address && kycStatus === "pending" && (
+                  <div className="flex items-center gap-2 rounded-lg border border-accent/30 bg-accent/10 p-3">
+                    <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                    <span className="text-sm font-medium text-accent">KYC Under Review (1–3 business days)</span>
+                  </div>
+                )}
+
                 <Button
                   className="w-full bg-[hsl(var(--equity))] text-primary-foreground font-semibold hover:opacity-90"
                   size="lg"
-                  onClick={!address ? connect : undefined}
-                  disabled={address ? (!amount || qty <= 0) : false}
+                  onClick={handleBuyClick}
+                  disabled={address ? (kycStatus === "pending" || !amount || qty <= 0) : false}
                 >
-                  {!address ? "Connect Wallet" : `Buy ${qty.toLocaleString()} EQT`}
+                  {!address
+                    ? "Connect Wallet"
+                    : kycStatus === "unverified"
+                    ? "Complete KYC to Buy"
+                    : kycStatus === "pending"
+                    ? "KYC Pending..."
+                    : `Buy ${qty.toLocaleString()} EQT`}
                 </Button>
 
-                <div className="flex items-start gap-2 rounded-lg border border-border/30 bg-muted/30 p-3">
-                  <Lock className="mt-0.5 h-4 w-4 text-[hsl(var(--equity))]" />
-                  <p className="text-xs text-muted-foreground">
-                    EQT is a security token. KYC verification is required before token distribution. Tokens will be distributed at mainnet launch (Q3 2025).
-                  </p>
-                </div>
+                {kycStatus === "unverified" && (
+                  <div className="flex items-start gap-2 rounded-lg border border-border/30 bg-muted/30 p-3">
+                    <Lock className="mt-0.5 h-4 w-4 text-[hsl(var(--equity))]" />
+                    <p className="text-xs text-muted-foreground">
+                      EQT is a security token. You must complete KYC/AML verification before purchasing. Tokens are distributed at mainnet launch (Q3 2025).
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -329,6 +363,14 @@ const EQTPresale = () => {
           </motion.div>
         </div>
       </main>
+
+      <KYCVerificationModal
+        open={kycOpen}
+        onClose={() => setKycOpen(false)}
+        onComplete={() => setKycOpen(false)}
+        kycStatus={kycStatus}
+        setKycStatus={setKycStatus}
+      />
     </div>
   );
 };
