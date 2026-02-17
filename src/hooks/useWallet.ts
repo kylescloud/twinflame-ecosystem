@@ -56,7 +56,7 @@ export function useWallet() {
   const connect = useCallback(async () => {
     const eth = (window as any).ethereum;
     if (!eth) {
-      setWallet((s) => ({ ...s, error: "No wallet detected. Please install MetaMask." }));
+      window.open("https://metamask.io/download/", "_blank", "noopener,noreferrer");
       return;
     }
     setWallet((s) => ({ ...s, isConnecting: true, error: null }));
