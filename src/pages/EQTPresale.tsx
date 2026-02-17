@@ -343,6 +343,34 @@ const EQTPresale = () => {
               </CardContent>
             </Card>
 
+            {/* Ownership & Dividend Calculator */}
+            <Card className="border-equity/20 bg-card/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Coins className="h-5 w-5 text-[hsl(var(--equity))]" />
+                  Your Investment Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <div className="rounded-lg border border-border/50 bg-background/30 p-5 text-center">
+                    <p className="text-sm text-muted-foreground">Ownership Stake</p>
+                    <p className="mt-1 font-display text-3xl font-bold text-[hsl(var(--equity))]">
+                      {qty > 0 ? ((qty / 1_000_000) * 100).toFixed(4) : "0.0000"}%
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">of 1,000,000 total supply</p>
+                  </div>
+                  <div className="rounded-lg border border-border/50 bg-background/30 p-5 text-center">
+                    <p className="text-sm text-muted-foreground">Your Dividend Share</p>
+                    <p className="mt-1 font-display text-3xl font-bold text-[hsl(var(--equity))]">
+                      {qty > 0 ? ((qty / 1_000_000) * 100).toFixed(4) : "0.0000"}%
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">of 20% gross protocol revenue</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Key Stats */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {[
