@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 import TokensSection from "@/components/TokensSection";
 import TokenomicsDiagram from "@/components/TokenomicsDiagram";
 import AdvancedCharts from "@/components/AdvancedCharts";
@@ -14,6 +15,7 @@ import EmberParticles from "@/components/EmberParticles";
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
+      <AnnouncementBanner />
       <EmberParticles />
       <Navbar />
       <HeroSection />

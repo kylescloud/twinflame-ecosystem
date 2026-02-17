@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Whitepaper from "./pages/Whitepaper";
 import Buy from "./pages/Buy";
+import EQTPresale from "./pages/EQTPresale";
 import Staking from "./pages/Staking";
 import Portfolio from "./pages/Portfolio";
 import Swap from "./pages/Swap";
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/whitepaper" element={<Whitepaper />} />
           <Route path="/buy" element={<Buy />} />
+          <Route path="/eqt-presale" element={<EQTPresale />} />
           <Route path="/staking" element={<Staking />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/swap" element={<Swap />} />
