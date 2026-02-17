@@ -13,6 +13,7 @@ import { useWallet } from "@/hooks/useWallet";
 import Navbar from "@/components/Navbar";
 import EmberParticles from "@/components/EmberParticles";
 import { useToast } from "@/hooks/use-toast";
+import EQTDividendSection from "@/components/EQTDividendSection";
 
 // Placeholder contract addresses — replace with real deployed addresses
 const CONTRACT_ADDRESSES: Record<string, string> = {
@@ -290,6 +291,9 @@ const Portfolio = () => {
                 </CardContent>
               </Card>
             </motion.div>
+
+            {/* EQT Dividend Sections */}
+            <EQTDividendSection eqtBalance={tokenData.EQT.balance} />
 
             {/* Recent Transactions — linked to Polygonscan */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
