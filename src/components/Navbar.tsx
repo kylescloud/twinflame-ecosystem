@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Menu, X, BookOpen, Wallet, ShoppingCart, Layers, PieChart, ArrowDownUp } from "lucide-react";
+import { Menu, X, BookOpen, Wallet, ShoppingCart, Layers, PieChart, ArrowDownUp } from "lucide-react";
 import { Link } from "react-router-dom";
+import flameLogo from "@/assets/flame-logo.png";
 import { useWallet } from "@/hooks/useWallet";
 import { Button } from "@/components/ui/button";
 
@@ -59,7 +60,7 @@ const Navbar = () => {
     >
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2">
-          <Flame className="h-7 w-7 text-primary" />
+          <img src={flameLogo} alt="TwinFlame" className="h-8 w-8 rounded-full" />
           <span className="font-display text-xl font-bold text-gradient-fire">TwinFlame</span>
         </Link>
 
