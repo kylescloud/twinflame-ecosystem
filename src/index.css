@@ -82,10 +82,21 @@
 
 @layer utilities {
   .text-gradient-fire {
-    background: var(--gradient-fire);
+    background: linear-gradient(
+      90deg,
+      hsl(15, 100%, 45%),
+      hsl(25, 95%, 53%),
+      hsl(38, 90%, 55%),
+      hsl(45, 100%, 60%),
+      hsl(38, 90%, 55%),
+      hsl(25, 95%, 53%),
+      hsl(15, 100%, 45%)
+    );
+    background-size: 200% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: shimmer-fire 3s ease-in-out infinite;
   }
 
   .bg-gradient-fire {
@@ -121,6 +132,11 @@
     -webkit-mask-composite: xor;
     mask-composite: exclude;
   }
+}
+
+@keyframes shimmer-fire {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 @keyframes float {
