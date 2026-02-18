@@ -383,6 +383,9 @@ const EQTPresale = () => {
                       const ownershipPct = qty > 0 ? qty / 1_000_000 : 0;
                       const dividendPool = rev * 0.20;
                       const userPayout = dividendPool * ownershipPct;
+                      const annualPayout = userPayout * 4;
+                      const investmentCost = qty * PRESALE_PRICE;
+                      const annualROI = investmentCost > 0 ? (annualPayout / investmentCost) * 100 : 0;
                       return (
                         <div key={rev} className="rounded-lg border border-border/30 bg-background/30 p-4 text-center space-y-1">
                           <p className="text-xs text-muted-foreground">If quarterly revenue is</p>
@@ -395,8 +398,19 @@ const EQTPresale = () => {
                             ${userPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            ≈ ${(userPayout * 4).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/yr
+                            ≈ ${annualPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/yr
                           </p>
+                          {qty > 0 && (
+                            <div className="mt-2 rounded-md bg-primary/10 px-2 py-1.5">
+                              <p className="text-xs text-muted-foreground">Annual ROI</p>
+                              <p className="font-display text-lg font-bold text-primary">
+                                {annualROI.toFixed(2)}%
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                on ${investmentCost.toLocaleString(undefined, { minimumFractionDigits: 2 })} investment
+                              </p>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
