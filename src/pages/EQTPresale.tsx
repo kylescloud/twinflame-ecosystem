@@ -351,7 +351,7 @@ const EQTPresale = () => {
                   Your Investment Summary
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <div className="rounded-lg border border-border/50 bg-background/30 p-5 text-center">
                     <p className="text-sm text-muted-foreground">Ownership Stake</p>
@@ -367,6 +367,45 @@ const EQTPresale = () => {
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">of 20% gross protocol revenue</p>
                   </div>
+                </div>
+
+                {/* Projected Quarterly USDC Earnings Calculator */}
+                <div className="rounded-lg border border-[hsl(var(--equity))]/20 bg-[hsl(var(--equity))]/5 p-5 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-[hsl(var(--equity))]" />
+                    <p className="text-sm font-semibold">Projected Quarterly USDC Earnings</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Estimate your quarterly dividend based on hypothetical protocol revenue. EQT holders receive 20% of gross revenue, distributed proportionally.
+                  </p>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    {[50_000, 100_000, 250_000].map((rev) => {
+                      const ownershipPct = qty > 0 ? qty / 1_000_000 : 0;
+                      const dividendPool = rev * 0.20;
+                      const userPayout = dividendPool * ownershipPct;
+                      return (
+                        <div key={rev} className="rounded-lg border border-border/30 bg-background/30 p-4 text-center space-y-1">
+                          <p className="text-xs text-muted-foreground">If quarterly revenue is</p>
+                          <p className="text-sm font-semibold">${rev.toLocaleString()}</p>
+                          <div className="border-t border-border/20 my-2" />
+                          <p className="text-xs text-muted-foreground">Dividend Pool (20%)</p>
+                          <p className="text-sm font-medium">${dividendPool.toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground mt-2">Your Quarterly Payout</p>
+                          <p className="font-display text-xl font-bold text-[hsl(var(--equity))]">
+                            ${userPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            ≈ ${(userPayout * 4).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/yr
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {qty <= 0 && (
+                    <p className="text-xs text-muted-foreground text-center italic">
+                      Enter a token quantity above to see your projected earnings.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
