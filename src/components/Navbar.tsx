@@ -67,6 +67,7 @@ const Navbar = () => {
             animate={{ scale: [1, 1.08, 1], filter: ["drop-shadow(0 0 6px hsl(25,95%,53%))", "drop-shadow(0 0 14px hsl(25,95%,53%))", "drop-shadow(0 0 6px hsl(25,95%,53%))"] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           />
+          <span className="font-display text-xl font-bold text-gradient-fire">TwinFlame</span>
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">
