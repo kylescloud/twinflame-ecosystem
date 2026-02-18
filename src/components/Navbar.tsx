@@ -60,8 +60,13 @@ const Navbar = () => {
     >
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2">
-          <img src={flameLogo} alt="TwinFlame" className="h-8 w-8 rounded-full" />
-          <span className="font-display text-xl font-bold text-gradient-fire">TwinFlame</span>
+          <motion.img
+            src={flameLogo}
+            alt="TwinFlame"
+            className="h-10 w-10 rounded-full drop-shadow-[0_0_8px_hsl(25,95%,53%)]"
+            animate={{ scale: [1, 1.08, 1], filter: ["drop-shadow(0 0 6px hsl(25,95%,53%))", "drop-shadow(0 0 14px hsl(25,95%,53%))", "drop-shadow(0 0 6px hsl(25,95%,53%))"] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          />
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">
