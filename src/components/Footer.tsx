@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import flameLogo from "@/assets/flame-logo.png";
 
 const Footer = () => {
@@ -9,14 +10,18 @@ const Footer = () => {
           <span className="font-display text-sm font-bold text-gradient-fire">TwinFlame Finance</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          © 2025 TwinFlame Finance. All rights reserved.
+          © 2026 TwinFlame Finance. All rights reserved.
         </p>
         <div className="flex gap-6">
-          {["Discord", "Twitter", "Docs"].map((link) => (
-            <a key={link} href="#" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-              {link}
-            </a>
-          ))}
+          <a href="#" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
+            Discord
+          </a>
+          <a href="#" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
+            Twitter
+          </a>
+          <Link to="/docs" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
+            Docs
+          </Link>
         </div>
       </div>
     </footer>
