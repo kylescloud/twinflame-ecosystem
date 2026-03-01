@@ -372,11 +372,11 @@ const Whitepaper = () => {
         <Section id="roadmap" num="08" title="Roadmap" subtitle="What's next for TwinFlame" icon={Globe}>
           <div className="space-y-4">
             {[
-              { quarter: "Q1 2025", items: "Concept development, team formation, private sale." },
-              { quarter: "Q2 2025", items: "Smart contract development, testnet launch, security audits." },
-              { quarter: "Q3 2025", items: "Mainnet launch on Polygon, initial liquidity, staking and swap live." },
-              { quarter: "Q4 2025", items: "DEX and lending platform launch, first EQT dividend distribution." },
-              { quarter: "2026+", items: "Cross-chain expansion (Arbitrum, Avalanche), DAO fully operational, partnerships." },
+              { quarter: "Q1 2026", items: "Concept development, team formation, private sale." },
+              { quarter: "Q2 2026", items: "Smart contract development, testnet launch, security audits." },
+              { quarter: "Q3 2026", items: "Mainnet launch on Polygon, initial liquidity, staking and swap live." },
+              { quarter: "Q4 2026", items: "DEX and lending platform launch, first EQT dividend distribution." },
+              { quarter: "2027+", items: "Cross-chain expansion (Arbitrum, Avalanche, BNB Chain), DAO fully operational, partnerships." },
             ].map((item) => (
               <div key={item.quarter} className="flex gap-4 rounded-xl border border-border bg-muted/20 p-5">
                 <span className="shrink-0 font-display text-sm font-bold text-primary">{item.quarter}</span>
