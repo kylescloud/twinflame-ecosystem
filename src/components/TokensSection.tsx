@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
-import { Flame, Sparkles, Shield } from "lucide-react";
+import blazeToken from "@/assets/blaze-token.png";
+import emberToken from "@/assets/ember-token.png";
+import eqtToken from "@/assets/eqt-token.png";
 
 const tokens = [
   {
     name: "BLAZE",
     subtitle: "Core Utility & Governance",
-    icon: Flame,
+    logo: blazeToken,
     color: "blaze",
     glowClass: "glow-fire",
     supply: "10,000,000",
@@ -15,7 +17,7 @@ const tokens = [
   {
     name: "EMBER",
     subtitle: "Reward & Utility Token",
-    icon: Sparkles,
+    logo: emberToken,
     color: "ember",
     glowClass: "glow-ember",
     supply: "Uncapped",
@@ -25,7 +27,7 @@ const tokens = [
   {
     name: "EQT",
     subtitle: "Revenue Share & Governance",
-    icon: Shield,
+    logo: eqtToken,
     color: "equity",
     glowClass: "glow-equity",
     supply: "1,000,000",
@@ -75,8 +77,8 @@ const TokensSection = () => {
               variants={cardVariants}
               className={`group relative overflow-hidden rounded-2xl border border-border bg-card p-8 transition-all hover:border-${token.color}/30 ${token.glowClass} hover:scale-[1.02]`}
             >
-              <div className={`mb-6 inline-flex rounded-xl bg-${token.color}/10 p-3`}>
-                <token.icon className={`h-7 w-7 text-${token.color}`} />
+              <div className="mb-6">
+                <img src={token.logo} alt={`${token.name} token logo`} className="h-14 w-14 rounded-full" />
               </div>
 
               <h3 className="font-display text-2xl font-bold">{token.name}</h3>
