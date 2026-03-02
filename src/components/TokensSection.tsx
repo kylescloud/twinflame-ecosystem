@@ -10,6 +10,7 @@ const tokens = [
     logo: blazeToken,
     color: "blaze",
     glowClass: "glow-fire",
+    animClass: "animate-blaze-burn",
     supply: "10,000,000",
     description: "The primary store of value. Stake to earn EMBER, vote on protocol parameters, and access exclusive features. Deflationary through continuous buyback-and-burn.",
     features: ["Staking rewards", "Governance voting", "Deflationary supply", "Tiered benefits"],
@@ -20,6 +21,7 @@ const tokens = [
     logo: emberToken,
     color: "ember",
     glowClass: "glow-ember",
+    animClass: "animate-ember-float",
     supply: "Uncapped",
     description: "The circulatory fuel powering engagement. Earned through staking and liquidity. Burn to mint BLAZE at 10% discount, creating constant demand.",
     features: ["Staking rewards", "Discount swaps", "Reduced fees", "Liquidity fuel"],
@@ -30,6 +32,7 @@ const tokens = [
     logo: eqtToken,
     color: "equity",
     glowClass: "glow-equity",
+    animClass: "animate-eqt-breathe",
     supply: "1,000,000",
     description: "A financial stake in protocol success. Receives 20% of gross revenues as quarterly dividends. Regulated security token with transfer restrictions.",
     features: ["20% revenue share", "Quarterly dividends", "Treasury governance", "Security token"],
@@ -78,7 +81,11 @@ const TokensSection = () => {
               className={`group relative overflow-hidden rounded-2xl border border-border bg-card p-8 transition-all hover:border-${token.color}/30 ${token.glowClass} hover:scale-[1.02]`}
             >
               <div className="mb-6">
-                <img src={token.logo} alt={`${token.name} token logo`} className="h-14 w-14 rounded-full" />
+                <img
+                  src={token.logo}
+                  alt={`${token.name} token logo`}
+                  className={`h-14 w-14 rounded-full ${token.animClass}`}
+                />
               </div>
 
               <h3 className="font-display text-2xl font-bold">{token.name}</h3>
