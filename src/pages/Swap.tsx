@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowDownUp, Flame, Sparkles, ArrowLeft, Zap, TrendingUp, Shield, Settings2, Clock, ArrowUpRight, ArrowDownRight, Check } from "lucide-react";
+import { ArrowDownUp, ArrowLeft, Zap, TrendingUp, Shield, Settings2, Clock, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { TOKEN_LOGOS } from "@/lib/tokenAssets";
 
 type Direction = "blazeToEmber" | "emberToBlaze";
 
@@ -18,8 +19,8 @@ const PROTOCOL_FEE = 0.003;
 const SLIPPAGE_OPTIONS = [0.1, 0.5, 1.0];
 
 const TOKEN_META = {
-  blaze: { name: "BLAZE", icon: Flame, color: "text-blaze", bg: "bg-blaze/10", border: "border-blaze/30" },
-  ember: { name: "EMBER", icon: Sparkles, color: "text-ember", bg: "bg-ember/10", border: "border-ember/30" },
+  blaze: { name: "BLAZE", logo: TOKEN_LOGOS.BLAZE, color: "text-blaze", bg: "bg-blaze/10", border: "border-blaze/30", animClass: "animate-blaze-burn" },
+  ember: { name: "EMBER", logo: TOKEN_LOGOS.EMBER, color: "text-ember", bg: "bg-ember/10", border: "border-ember/30", animClass: "animate-ember-float" },
 };
 
 interface SwapTx {
@@ -186,7 +187,7 @@ const Swap = () => {
                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">You send</label>
                 <div className="flex items-center gap-3">
                   <div className={`flex items-center gap-2 rounded-md border border-border/50 bg-background/60 px-3 py-2 ${fromToken.color}`}>
-                    <fromToken.icon className="h-4 w-4" />
+                    <img src={fromToken.logo} alt="" className={`h-4 w-4 rounded-full ${fromToken.animClass}`} />
                     <span className="text-sm font-semibold">{fromToken.name}</span>
                   </div>
                   <Input
@@ -216,7 +217,7 @@ const Swap = () => {
                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">You receive</label>
                 <div className="flex items-center gap-3">
                   <div className={`flex items-center gap-2 rounded-md border border-border/50 bg-background/60 px-3 py-2 ${toToken.color}`}>
-                    <toToken.icon className="h-4 w-4" />
+                    <img src={toToken.logo} alt="" className={`h-4 w-4 rounded-full ${toToken.animClass}`} />
                     <span className="text-sm font-semibold">{toToken.name}</span>
                   </div>
                   <div className="flex-1 text-right text-xl font-semibold text-foreground">
