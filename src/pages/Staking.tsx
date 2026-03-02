@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Flame, TrendingUp, Clock, Zap, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { TrendingUp, Clock, Zap, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { useWallet } from "@/hooks/useWallet";
 import Navbar from "@/components/Navbar";
 import EmberParticles from "@/components/EmberParticles";
+import { TOKEN_LOGOS } from "@/lib/tokenAssets";
 
 const MOCK_STATS = {
   totalStaked: "4,231,560",
@@ -22,6 +23,13 @@ const Staking = () => {
   const { address, connect } = useWallet();
   const [stakeAmount, setStakeAmount] = useState("");
   const [unstakeAmount, setUnstakeAmount] = useState("");
+
+  const statCards = [
+    { label: "Total Staked", value: MOCK_STATS.totalStaked, sub: "BLAZE", logo: TOKEN_LOGOS.BLAZE, animClass: "animate-blaze-burn" },
+    { label: "Current APY", value: `${MOCK_STATS.apy}%`, sub: "annualized", icon: TrendingUp },
+    { label: "Your Staked", value: address ? MOCK_STATS.yourStaked : "—", sub: "BLAZE", icon: Clock },
+    { label: "Pending Rewards", value: address ? MOCK_STATS.rewards : "—", sub: "EMBER", logo: TOKEN_LOGOS.EMBER, animClass: "animate-ember-float" },
+  ];
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
@@ -48,15 +56,14 @@ const Staking = () => {
           transition={{ delay: 0.15 }}
           className="mx-auto mb-10 grid max-w-4xl grid-cols-2 gap-4 md:grid-cols-4"
         >
-          {[
-            { label: "Total Staked", value: MOCK_STATS.totalStaked, sub: "BLAZE", icon: Flame },
-            { label: "Current APY", value: `${MOCK_STATS.apy}%`, sub: "annualized", icon: TrendingUp },
-            { label: "Your Staked", value: address ? MOCK_STATS.yourStaked : "—", sub: "BLAZE", icon: Clock },
-            { label: "Pending Rewards", value: address ? MOCK_STATS.rewards : "—", sub: "EMBER", icon: Zap },
-          ].map((s, i) => (
+          {statCards.map((s, i) => (
             <Card key={i} className="border-border/30 bg-card/60 backdrop-blur-sm">
               <CardContent className="p-4 text-center">
-                <s.icon className="mx-auto mb-2 h-6 w-6 text-primary" />
+                {s.logo ? (
+                  <img src={s.logo} alt="" className={`mx-auto mb-2 h-6 w-6 rounded-full ${s.animClass || ""}`} />
+                ) : s.icon ? (
+                  <s.icon className="mx-auto mb-2 h-6 w-6 text-primary" />
+                ) : null}
                 <p className="text-xs text-muted-foreground">{s.label}</p>
                 <p className="text-xl font-bold">{s.value}</p>
                 <p className="text-xs text-muted-foreground">{s.sub}</p>
@@ -97,7 +104,7 @@ const Staking = () => {
             <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Flame className="h-5 w-5 text-primary" /> Stake BLAZE
+                  <img src={TOKEN_LOGOS.BLAZE} alt="" className="h-5 w-5 rounded-full animate-blaze-burn" /> Stake BLAZE
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">

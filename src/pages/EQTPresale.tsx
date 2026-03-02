@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Shield, ArrowRight, Lock, DollarSign, Users, Vote, Calendar, TrendingUp, CheckCircle, Coins, PieChart, Clock, BadgeCheck, Loader2 } from "lucide-react";
+import { TOKEN_LOGOS } from "@/lib/tokenAssets";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -135,7 +136,7 @@ const EQTPresale = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[hsl(var(--equity))]">
-                    <Shield className="h-5 w-5 text-primary-foreground" />
+                    <img src={TOKEN_LOGOS.EQT} alt="EQT token" className="h-7 w-7 rounded-full animate-eqt-breathe" />
                   </div>
                   <div>
                     <span className="text-xl font-bold">Buy EQT</span>

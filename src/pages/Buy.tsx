@@ -10,24 +10,25 @@ import { useWallet } from "@/hooks/useWallet";
 import Navbar from "@/components/Navbar";
 import EmberParticles from "@/components/EmberParticles";
 import PriceChart from "@/components/PriceChart";
+import { TOKEN_LOGOS } from "@/lib/tokenAssets";
 
 const TOKEN_PRICES = { BLAZE: 0.20, EQT: 5.00 };
 
-const BuyTokenCard = ({ token, color, icon: Icon, price, features }: {
-  token: string; color: string; icon: any; price: number; features: string[];
+const BuyTokenCard = ({ token, logo, price, features }: {
+  token: string; logo: string; price: number; features: string[];
 }) => {
   const { address, connect } = useWallet();
   const [amount, setAmount] = useState("");
   const cost = parseFloat(amount || "0") * price;
+
+  const animClass = token === "BLAZE" ? "animate-blaze-burn" : token === "EQT" ? "animate-eqt-breathe" : "animate-ember-float";
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>
-              <Icon className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <img src={logo} alt={`${token} token`} className={`h-10 w-10 rounded-full ${animClass}`} />
             <div>
               <span className="text-xl font-bold">{token}</span>
               <p className="text-sm font-normal text-muted-foreground">${price.toFixed(2)} per token</p>
@@ -111,18 +112,17 @@ const Buy = () => {
         <Tabs defaultValue="blaze" className="mx-auto max-w-2xl">
           <TabsList className="mb-8 grid w-full grid-cols-2 bg-muted/50">
             <TabsTrigger value="blaze" className="data-[state=active]:bg-gradient-fire data-[state=active]:text-primary-foreground">
-              <Flame className="mr-2 h-4 w-4" /> BLAZE
+              <img src={TOKEN_LOGOS.BLAZE} alt="" className="mr-2 h-4 w-4 rounded-full" /> BLAZE
             </TabsTrigger>
             <TabsTrigger value="eqt" className="data-[state=active]:bg-gradient-fire data-[state=active]:text-primary-foreground">
-              <Shield className="mr-2 h-4 w-4" /> EQT
+              <img src={TOKEN_LOGOS.EQT} alt="" className="mr-2 h-4 w-4 rounded-full" /> EQT
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="blaze">
             <BuyTokenCard
               token="BLAZE"
-              color="bg-gradient-fire"
-              icon={Flame}
+              logo={TOKEN_LOGOS.BLAZE}
               price={TOKEN_PRICES.BLAZE}
               features={[
                 "Governance voting rights on platform decisions",
@@ -136,8 +136,7 @@ const Buy = () => {
           <TabsContent value="eqt">
             <BuyTokenCard
               token="EQT"
-              color="bg-[hsl(var(--equity))]"
-              icon={Shield}
+              logo={TOKEN_LOGOS.EQT}
               price={TOKEN_PRICES.EQT}
               features={[
                 "20% of all platform fees as quarterly dividends",

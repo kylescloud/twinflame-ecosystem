@@ -14,6 +14,7 @@ import Navbar from "@/components/Navbar";
 import EmberParticles from "@/components/EmberParticles";
 import { useToast } from "@/hooks/use-toast";
 import EQTDividendSection from "@/components/EQTDividendSection";
+import { TOKEN_LOGOS } from "@/lib/tokenAssets";
 
 // Placeholder contract addresses — replace with real deployed addresses
 const CONTRACT_ADDRESSES: Record<string, string> = {
@@ -100,9 +101,9 @@ const Portfolio = () => {
   ];
 
   const holdings = [
-    { token: "BLAZE", icon: Flame, balance: tokenData.BLAZE.balance, staked: tokenData.BLAZE.staked, price: tokenData.BLAZE.price, change: tokenData.BLAZE.change24h, colorClass: "text-primary", bgClass: "bg-primary/10" },
-    { token: "EMBER", icon: Zap, balance: tokenData.EMBER.balance, staked: 0, price: tokenData.EMBER.price, change: tokenData.EMBER.change24h, colorClass: "text-accent", bgClass: "bg-accent/10" },
-    { token: "EQT", icon: Shield, balance: tokenData.EQT.balance, staked: 0, price: tokenData.EQT.price, change: tokenData.EQT.change24h, colorClass: "text-[hsl(var(--equity))]", bgClass: "bg-[hsl(var(--equity))/0.1]" },
+    { token: "BLAZE", logo: TOKEN_LOGOS.BLAZE, animClass: "animate-blaze-burn", balance: tokenData.BLAZE.balance, staked: tokenData.BLAZE.staked, price: tokenData.BLAZE.price, change: tokenData.BLAZE.change24h, colorClass: "text-primary", bgClass: "bg-primary/10" },
+    { token: "EMBER", logo: TOKEN_LOGOS.EMBER, animClass: "animate-ember-float", balance: tokenData.EMBER.balance, staked: 0, price: tokenData.EMBER.price, change: tokenData.EMBER.change24h, colorClass: "text-accent", bgClass: "bg-accent/10" },
+    { token: "EQT", logo: TOKEN_LOGOS.EQT, animClass: "animate-eqt-breathe", balance: tokenData.EQT.balance, staked: 0, price: tokenData.EQT.price, change: tokenData.EQT.change24h, colorClass: "text-[hsl(var(--equity))]", bgClass: "bg-[hsl(var(--equity))/0.1]" },
   ];
 
   const summaryCards = [
@@ -258,7 +259,7 @@ const Portfolio = () => {
                       <div key={h.token} className="flex items-center justify-between rounded-lg border border-border/30 bg-background/30 p-4">
                         <div className="flex items-center gap-3">
                           <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${h.bgClass}`}>
-                            <h.icon className={`h-4 w-4 ${h.colorClass}`} />
+                            <img src={h.logo} alt={`${h.token} token`} className={`h-5 w-5 rounded-full ${h.animClass}`} />
                           </div>
                           <div>
                             <div className="flex items-center gap-1.5">
