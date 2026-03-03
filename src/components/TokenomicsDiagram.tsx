@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Flame, Sparkles, Shield, ArrowRight, ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowRight, ArrowDown, ArrowUp } from "lucide-react";
+import { TOKEN_LOGOS } from "@/lib/tokenAssets";
 
 const TokenomicsDiagram = () => {
   return (
@@ -20,7 +21,6 @@ const TokenomicsDiagram = () => {
           </p>
         </motion.div>
 
-        {/* Diagram */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -31,10 +31,10 @@ const TokenomicsDiagram = () => {
           {/* Desktop layout */}
           <div className="hidden md:block">
             <div className="relative">
-              {/* Top row: BLAZE center */}
               <div className="flex items-start justify-center">
                 <TokenNode
-                  icon={Flame}
+                  logo={TOKEN_LOGOS.BLAZE}
+                  animClass="animate-blaze-burn"
                   name="BLAZE"
                   subtitle="Store of Value"
                   color="blaze"
@@ -43,7 +43,6 @@ const TokenomicsDiagram = () => {
                 />
               </div>
 
-              {/* Connecting arrows and labels - BLAZE to EMBER */}
               <div className="my-2 flex items-center justify-center gap-32">
                 <div className="flex flex-col items-center">
                   <ArrowDown className="h-5 w-5 text-blaze animate-pulse-glow" />
@@ -59,10 +58,10 @@ const TokenomicsDiagram = () => {
                 </div>
               </div>
 
-              {/* Bottom row: EMBER and EQT */}
               <div className="flex items-start justify-center gap-16">
                 <TokenNode
-                  icon={Sparkles}
+                  logo={TOKEN_LOGOS.EMBER}
+                  animClass="animate-ember-float"
                   name="EMBER"
                   subtitle="Utility Fuel"
                   color="ember"
@@ -70,7 +69,6 @@ const TokenomicsDiagram = () => {
                   details={["Uncapped supply", "Reduced fees", "Constant burn"]}
                 />
 
-                {/* Arrow between EMBER and EQT */}
                 <div className="flex flex-col items-center justify-center self-center">
                   <div className="flex items-center gap-2">
                     <div className="h-px w-8 bg-gradient-to-r from-ember to-equity" />
@@ -82,7 +80,8 @@ const TokenomicsDiagram = () => {
                 </div>
 
                 <TokenNode
-                  icon={Shield}
+                  logo={TOKEN_LOGOS.EQT}
+                  animClass="animate-eqt-breathe"
                   name="EQT"
                   subtitle="Revenue Share"
                   color="equity"
@@ -91,7 +90,6 @@ const TokenomicsDiagram = () => {
                 />
               </div>
 
-              {/* Central flow label */}
               <div className="mt-8 flex justify-center">
                 <div className="rounded-xl border border-border bg-card/80 px-6 py-3 text-center backdrop-blur-sm">
                   <p className="text-xs text-muted-foreground">
@@ -102,11 +100,12 @@ const TokenomicsDiagram = () => {
             </div>
           </div>
 
-          {/* Mobile layout - vertical stack */}
+          {/* Mobile layout */}
           <div className="md:hidden">
             <div className="flex flex-col items-center gap-4">
               <TokenNode
-                icon={Flame}
+                logo={TOKEN_LOGOS.BLAZE}
+                animClass="animate-blaze-burn"
                 name="BLAZE"
                 subtitle="Store of Value"
                 color="blaze"
@@ -117,7 +116,8 @@ const TokenomicsDiagram = () => {
               <FlowArrow label="Stake BLAZE → Earn EMBER" color="blaze" />
 
               <TokenNode
-                icon={Sparkles}
+                logo={TOKEN_LOGOS.EMBER}
+                animClass="animate-ember-float"
                 name="EMBER"
                 subtitle="Utility Fuel"
                 color="ember"
@@ -128,7 +128,8 @@ const TokenomicsDiagram = () => {
               <FlowArrow label="Protocol Fees → 20% Revenue" color="equity" />
 
               <TokenNode
-                icon={Shield}
+                logo={TOKEN_LOGOS.EQT}
+                animClass="animate-eqt-breathe"
                 name="EQT"
                 subtitle="Revenue Share"
                 color="equity"
@@ -150,14 +151,16 @@ const TokenomicsDiagram = () => {
 };
 
 const TokenNode = ({
-  icon: Icon,
+  logo,
+  animClass,
   name,
   subtitle,
   color,
   glowClass,
   details,
 }: {
-  icon: React.ElementType;
+  logo: string;
+  animClass: string;
   name: string;
   subtitle: string;
   color: string;
@@ -165,8 +168,8 @@ const TokenNode = ({
   details: string[];
 }) => (
   <div className={`relative w-56 rounded-2xl border border-border bg-card p-5 text-center ${glowClass} transition-all hover:scale-105`}>
-    <div className={`mx-auto mb-3 inline-flex rounded-xl bg-${color}/10 p-3`}>
-      <Icon className={`h-6 w-6 text-${color}`} />
+    <div className="mx-auto mb-3 flex justify-center">
+      <img src={logo} alt={`${name} token`} className={`h-12 w-12 rounded-full ${animClass}`} />
     </div>
     <h3 className="font-display text-lg font-bold">{name}</h3>
     <p className="text-xs text-muted-foreground">{subtitle}</p>
