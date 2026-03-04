@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { ArrowRight, Flame } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 
@@ -56,12 +57,12 @@ const HeroSection = () => {
             Explore Tokens
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </a>
-          <a
-            href="#why"
+          <Link
+            to="/twinflame-swap"
             className="rounded-lg border border-border bg-muted/30 px-8 py-3.5 font-display text-sm font-semibold text-foreground backdrop-blur-sm transition-all hover:bg-muted/50"
           >
-            Learn More
-          </a>
+            Use TwinFlame Swap
+          </Link>
         </motion.div>
 
         {/* Stats */}

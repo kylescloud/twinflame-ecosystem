@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, BookOpen, Wallet, ShoppingCart, Layers, PieChart, ArrowDownUp, Compass } from "lucide-react";
+import { Menu, X, BookOpen, Wallet, ShoppingCart, Layers, PieChart, ArrowDownUp, Compass, Flame, Landmark } from "lucide-react";
 import { Link } from "react-router-dom";
 import flameLogo from "@/assets/flame-logo.png";
 import { useWallet } from "@/hooks/useWallet";
@@ -16,6 +16,8 @@ const navLinks = [
 const pageLinks = [
   { label: "Buy", to: "/buy", icon: ShoppingCart },
   { label: "Swap", to: "/swap", icon: ArrowDownUp },
+  { label: "TwinFlame Swap", to: "/twinflame-swap", icon: Flame },
+  { label: "Lending", to: "/twinflame-lending", icon: Landmark },
   { label: "Staking", to: "/staking", icon: Layers },
   { label: "How It Works", to: "/how-it-works", icon: Compass },
   { label: "Whitepaper", to: "/whitepaper", icon: BookOpen },
