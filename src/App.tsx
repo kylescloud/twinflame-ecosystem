@@ -10,6 +10,8 @@ import EQTPresale from "./pages/EQTPresale";
 import Staking from "./pages/Staking";
 import Portfolio from "./pages/Portfolio";
 import Swap from "./pages/Swap";
+import TwinFlameSwap from "./pages/TwinFlameSwap";
+import TwinFlameLending from "./pages/TwinFlameLending";
 import Docs from "./pages/Docs";
 import HowItWorks from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
@@ -30,6 +32,8 @@ const App = () => (
           <Route path="/staking" element={<Staking />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/swap" element={<Swap />} />
+          <Route path="/twinflame-swap" element={<TwinFlameSwap />} />
+          <Route path="/twinflame-lending" element={<TwinFlameLending />} />
           <Route path="/docs" element={<Docs />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
