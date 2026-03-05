@@ -58,7 +58,7 @@ const HeroSection = () => {
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </a>
           <Link
-            to="/twinflame-swap"
+            to="/dex"
             className="rounded-lg border border-border bg-muted/30 px-8 py-3.5 font-display text-sm font-semibold text-foreground backdrop-blur-sm transition-all hover:bg-muted/50"
           >
             Use TwinFlame Swap
