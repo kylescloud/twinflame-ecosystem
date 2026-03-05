@@ -1,37 +1,48 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Whitepaper from "./pages/Whitepaper";
-import Buy from "./pages/Buy";
-import Staking from "./pages/Staking";
-import Portfolio from "./pages/Portfolio";
-import Swap from "./pages/Swap";
-import NotFound from "./pages/NotFound";
+import { useState } from 'react';
+import { Navigation } from './components/Layout/Navigation';
+import { Discover } from './pages/Discover';
+import { Market } from './pages/Market';
+import { Trade } from './pages/Trade';
+import { Lend } from './pages/Lend';
+import { Portfolio } from './pages/Portfolio';
+import { Earn } from './pages/Earn';
+import { Analytics } from './pages/Analytics';
 
-const queryClient = new QueryClient();
+function App() {
+  const [currentPage, setCurrentPage] = useState('/discover');
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/whitepaper" element={<Whitepaper />} />
-          <Route path="/buy" element={<Buy />} />
-          <Route path="/staking" element={<Staking />} />
-          <Route path="/portfolio" element={<Portfolio />} />
-          <Route path="/swap" element={<Swap />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  function handleNavigate(path: string) {
+    setCurrentPage(path);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function renderPage() {
+    switch (currentPage) {
+      case '/discover':
+        return <Discover onNavigate={handleNavigate} />;
+      case '/market':
+        return <Market onNavigate={handleNavigate} />;
+      case '/trade':
+        return <Trade onNavigate={handleNavigate} />;
+      case '/lend':
+        return <Lend onNavigate={handleNavigate} />;
+      case '/portfolio':
+        return <Portfolio onNavigate={handleNavigate} />;
+      case '/earn':
+        return <Earn onNavigate={handleNavigate} />;
+      case '/analytics':
+        return <Analytics />;
+      default:
+        return <Discover onNavigate={handleNavigate} />;
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-950">
+      <Navigation currentPage={currentPage} onNavigate={handleNavigate} />
+      <main>{renderPage()}</main>
+    </div>
+  );
+}
 
 export default App;
