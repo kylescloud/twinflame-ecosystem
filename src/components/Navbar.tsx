@@ -15,9 +15,8 @@ const navLinks = [
 
 const pageLinks = [
   { label: "Buy", to: "/buy", icon: ShoppingCart },
+  { label: "DEX", to: "/dex", icon: Flame },
   { label: "Swap", to: "/swap", icon: ArrowDownUp },
-  { label: "TwinFlame Swap", to: "/twinflame-swap", icon: Flame },
-  { label: "Lending", to: "/twinflame-lending", icon: Landmark },
   { label: "Staking", to: "/staking", icon: Layers },
   { label: "How It Works", to: "/how-it-works", icon: Compass },
   { label: "Whitepaper", to: "/whitepaper", icon: BookOpen },
