@@ -16,13 +16,15 @@ import NotFound from "./pages/NotFound";
 
 // DEX Pages
 import DexLayout from "./components/dex/DexLayout";
-import DexHome from "./pages/dex/DexHome";
+import DexDiscover from "./pages/dex/DexDiscover";
+import DexMarket from "./pages/dex/DexMarket";
 import DexTrade from "./pages/dex/DexTrade";
-import DexMarkets from "./pages/dex/DexMarkets";
+import DexLend from "./pages/dex/DexLend";
 import DexPortfolio from "./pages/dex/DexPortfolio";
 import DexEarn from "./pages/dex/DexEarn";
 import DexAnalytics from "./pages/dex/DexAnalytics";
 import DexHistory from "./pages/dex/DexHistory";
+import DexGovernance from "./pages/dex/DexGovernance";
 
 const queryClient = new QueryClient();
 
@@ -45,18 +47,22 @@ const App = () => (
 
           {/* DEX Platform */}
           <Route path="/dex" element={<DexLayout />}>
-            <Route index element={<DexHome />} />
+            <Route index element={<DexDiscover />} />
+            <Route path="market" element={<DexMarket />} />
             <Route path="trade" element={<DexTrade />} />
-            <Route path="markets" element={<DexMarkets />} />
+            <Route path="lend" element={<DexLend />} />
             <Route path="portfolio" element={<DexPortfolio />} />
             <Route path="earn" element={<DexEarn />} />
             <Route path="analytics" element={<DexAnalytics />} />
             <Route path="history" element={<DexHistory />} />
+            <Route path="governance" element={<DexGovernance />} />
+            {/* Legacy redirects */}
+            <Route path="markets" element={<Navigate to="/dex/lend" replace />} />
           </Route>
 
           {/* Redirects from old routes */}
           <Route path="/twinflame-swap" element={<Navigate to="/dex/trade" replace />} />
-          <Route path="/twinflame-lending" element={<Navigate to="/dex/markets" replace />} />
+          <Route path="/twinflame-lending" element={<Navigate to="/dex/lend" replace />} />
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
