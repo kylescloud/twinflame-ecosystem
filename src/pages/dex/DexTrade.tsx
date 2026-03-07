@@ -32,6 +32,8 @@ const timeAgo = (d: Date) => {
   return `${Math.floor(s / 86400)}d ago`;
 };
 
+const SUPPLY_APY: Record<string, number> = { BLAZE: 4.2, EMBER: 5.8, EQT: 3.1 };
+
 const DexTrade = () => {
   const { address, connect, isConnecting, shortAddress } = useWallet();
   const { toast } = useToast();
@@ -46,6 +48,7 @@ const DexTrade = () => {
   const [showToSelector, setShowToSelector] = useState(false);
   const [txHistory, setTxHistory] = useState<SwapTx[]>([]);
   const [isSwapping, setIsSwapping] = useState(false);
+  const [instantYield, setInstantYield] = useState(true);
 
   const fromToken = TOKENS[fromIdx];
   const toToken = TOKENS[toIdx];
@@ -85,6 +88,11 @@ const DexTrade = () => {
     if (!isNaN(p) && p > 0 && p <= 50) setSlippage(p);
   };
 
+  const toAPY = SUPPLY_APY[toToken.symbol] || 0;
+  const projected7dEarnings = swapResult && instantYield && toAPY > 0
+    ? (swapResult.amountOut * (toAPY / 100) * (7 / 365))
+    : 0;
+
   const handleSwap = async () => {
     if (!isValid || !address || !swapResult) return;
     setIsSwapping(true);
@@ -101,8 +109,10 @@ const DexTrade = () => {
     setIsSwapping(false);
 
     toast({
-      title: "Swap Executed",
-      description: `${parsed.toLocaleString()} ${fromToken.symbol} → ${swapResult.amountOut.toFixed(4)} ${toToken.symbol} | Fee: ${swapResult.fee.toFixed(6)}`,
+      title: instantYield ? "Swap & Supply Executed ⚡" : "Swap Executed",
+      description: instantYield
+        ? `${parsed.toLocaleString()} ${fromToken.symbol} → ${swapResult.amountOut.toFixed(4)} ${toToken.symbol} supplied at ${toAPY}% APY. Fee: ${swapResult.fee.toFixed(6)}`
+        : `${parsed.toLocaleString()} ${fromToken.symbol} → ${swapResult.amountOut.toFixed(4)} ${toToken.symbol} | Fee: ${swapResult.fee.toFixed(6)}`,
     });
   };
 
@@ -349,6 +359,31 @@ const DexTrade = () => {
                 )}
               </AnimatePresence>
 
+              {/* Instant Yield Swaps Toggle */}
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-semibold text-foreground">Instant Yield Swaps</span>
+                  </div>
+                  <button
+                    onClick={() => setInstantYield(!instantYield)}
+                    className={`relative h-5 w-9 rounded-full transition-colors ${instantYield ? "bg-primary" : "bg-muted"}`}
+                  >
+                    <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-primary-foreground transition-transform ${instantYield ? "left-[18px]" : "left-0.5"}`} />
+                  </button>
+                </div>
+                {instantYield && toAPY > 0 && (
+                  <p className="text-[10px] text-muted-foreground">
+                    Auto-supply {toToken.symbol} to lending pool at <span className="text-[hsl(142,70%,50%)] font-semibold">{toAPY}% APY</span>
+                    {projected7dEarnings > 0 && <> · 7d projection: <span className="text-foreground font-medium">+{projected7dEarnings.toFixed(4)} {toToken.symbol}</span></>}
+                  </p>
+                )}
+                {instantYield && toAPY === 0 && (
+                  <p className="text-[10px] text-muted-foreground">No lending pool available for {toToken.symbol}</p>
+                )}
+              </div>
+
               {/* Contract */}
               <div className="flex items-center justify-between rounded-md border border-border/30 bg-muted/10 px-3 py-1.5">
                 <span className="text-[10px] text-muted-foreground">Router: {CONTRACTS.TWINFLAME_SWAP.slice(0, 10)}…</span>
@@ -372,7 +407,7 @@ const DexTrade = () => {
                 >
                   {isSwapping ? (
                     <span className="flex items-center gap-2"><span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> Executing…</span>
-                  ) : !isValid ? "Enter an amount" : `Swap ${fromToken.symbol} → ${toToken.symbol}`}
+                  ) : !isValid ? "Enter an amount" : instantYield ? `Swap & Earn ${toToken.symbol}` : `Swap ${fromToken.symbol} → ${toToken.symbol}`}
                 </Button>
               )}
             </CardContent>
