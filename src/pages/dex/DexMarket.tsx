@@ -89,12 +89,12 @@ const DexMarket = () => {
       if (live) {
         return {
           ...sc,
-          price: live.current_price,
-          change24h: live.price_change_percentage_24h ?? sc.change24h,
-          marketCap: live.market_cap ?? sc.marketCap,
-          volume24h: live.total_volume ?? sc.volume24h,
+          price: typeof live.current_price === "number" ? live.current_price : sc.price,
+          change24h: typeof live.price_change_percentage_24h === "number" ? live.price_change_percentage_24h : sc.change24h,
+          marketCap: typeof live.market_cap === "number" ? live.market_cap : sc.marketCap,
+          volume24h: typeof live.total_volume === "number" ? live.total_volume : sc.volume24h,
           logo: live.image || sc.logo,
-          sparkline: live.sparkline_in_7d?.price?.slice(-24), // last 24 points
+          sparkline: live.sparkline_in_7d?.price?.slice(-24),
           isLive: true,
         };
       }
@@ -245,14 +245,14 @@ const DexMarket = () => {
                         animate={{ color: "hsl(var(--foreground))" }}
                         className="tabular-nums"
                       >
-                        ${coin.price < 1 ? coin.price.toFixed(4) : coin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        ${coin.price != null && coin.price < 1 ? coin.price.toFixed(4) : (coin.price ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </motion.span>
                     </td>
                     <td className={`px-4 py-3 text-right font-semibold ${coin.change24h >= 0 ? "text-[hsl(142,70%,50%)]" : "text-destructive"}`}>
                       <div className="flex items-center justify-end gap-1">
                         {coin.change24h >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                         <span className="tabular-nums">
-                          {coin.change24h >= 0 ? "+" : ""}{coin.change24h?.toFixed(2)}%
+                          {(coin.change24h ?? 0) >= 0 ? "+" : ""}{(coin.change24h ?? 0).toFixed(2)}%
                         </span>
                       </div>
                     </td>
