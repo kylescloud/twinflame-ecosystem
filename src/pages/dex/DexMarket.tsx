@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, TrendingUp, TrendingDown, Flame, Zap, Wifi, WifiOff, RefreshCw, Loader2 } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, Flame, Zap, Wifi, WifiOff, RefreshCw, Loader2, ChevronDown, ArrowUpDown, Filter } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,43 +22,53 @@ interface CoinData {
   trendScore?: number;
   sparkline?: number[];
   isLive?: boolean;
+  category?: string;
 }
 
-// Static fallback data for native tokens + defaults
-const STATIC_COINS: CoinData[] = [
-  { rank: 1, symbol: "POL", name: "Polygon", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png?v=035", price: 0.52, change24h: 3.4, marketCap: 5200000000, volume24h: 320000000, supplyAPY: 3.5, trendScore: 95 },
-  { rank: 2, symbol: "WETH", name: "Wrapped Ether", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png?v=035", price: 3450, change24h: 1.2, marketCap: 415000000000, volume24h: 18000000000, supplyAPY: 2.8, trendScore: 88 },
-  { rank: 3, symbol: "USDC", name: "USD Coin", logo: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png?v=035", price: 1.0, change24h: 0.01, marketCap: 33000000000, volume24h: 5800000000, supplyAPY: 6.2, trendScore: 70 },
-  { rank: 4, symbol: "USDT", name: "Tether", logo: "https://cryptologos.cc/logos/tether-usdt-logo.png?v=035", price: 1.0, change24h: 0.02, marketCap: 120000000000, volume24h: 45000000000, supplyAPY: 5.8, trendScore: 72 },
-  { rank: 5, symbol: "BLAZE", name: "TwinFlame BLAZE", logo: TOKEN_LOGOS.BLAZE, price: 0.25, change24h: 12.5, marketCap: 25000000, volume24h: 3400000, supplyAPY: 4.2, trendScore: 98, isNew: true },
-  { rank: 6, symbol: "EMBER", name: "TwinFlame EMBER", logo: TOKEN_LOGOS.EMBER, price: 0.20, change24h: 8.7, marketCap: 20000000, volume24h: 2800000, supplyAPY: 5.8, trendScore: 92 },
-  { rank: 7, symbol: "EQT", name: "TwinFlame Equity", logo: TOKEN_LOGOS.EQT, price: 2.50, change24h: -2.1, marketCap: 12500000, volume24h: 850000, supplyAPY: 3.1, trendScore: 65 },
-  { rank: 8, symbol: "WBTC", name: "Wrapped Bitcoin", logo: "https://cryptologos.cc/logos/wrapped-bitcoin-wbtc-logo.png?v=035", price: 98500, change24h: 0.8, marketCap: 13500000000, volume24h: 580000000, trendScore: 80 },
-  { rank: 9, symbol: "AAVE", name: "Aave", logo: "https://cryptologos.cc/logos/aave-aave-logo.png?v=035", price: 285, change24h: -3.4, marketCap: 4200000000, volume24h: 210000000, trendScore: 72 },
-  { rank: 10, symbol: "LINK", name: "Chainlink", logo: "https://cryptologos.cc/logos/chainlink-link-logo.png?v=035", price: 18.5, change24h: 5.2, marketCap: 11000000000, volume24h: 850000000, trendScore: 85 },
-  { rank: 11, symbol: "UNI", name: "Uniswap", logo: "https://cryptologos.cc/logos/uniswap-uni-logo.png?v=035", price: 7.2, change24h: 2.1, marketCap: 5400000000, volume24h: 320000000, trendScore: 82 },
-  { rank: 12, symbol: "CRV", name: "Curve DAO", logo: "https://cryptologos.cc/logos/curve-dao-token-crv-logo.png?v=035", price: 0.85, change24h: -1.5, marketCap: 1100000000, volume24h: 180000000, trendScore: 68 },
-  { rank: 13, symbol: "SUSHI", name: "SushiSwap", logo: "https://cryptologos.cc/logos/sushiswap-sushi-logo.png?v=035", price: 1.2, change24h: 4.3, marketCap: 350000000, volume24h: 65000000, trendScore: 74 },
-  { rank: 14, symbol: "GRT", name: "The Graph", logo: "https://cryptologos.cc/logos/the-graph-grt-logo.png?v=035", price: 0.22, change24h: 6.8, marketCap: 2100000000, volume24h: 150000000, trendScore: 78, isNew: false },
-  { rank: 15, symbol: "SNX", name: "Synthetix", logo: "https://cryptologos.cc/logos/synthetix-network-token-snx-logo.png?v=035", price: 2.8, change24h: -4.2, marketCap: 900000000, volume24h: 85000000, trendScore: 62 },
-  { rank: 16, symbol: "COMP", name: "Compound", logo: "https://cryptologos.cc/logos/compound-comp-logo.png?v=035", price: 52, change24h: 1.8, marketCap: 520000000, volume24h: 42000000, trendScore: 58 },
-  { rank: 17, symbol: "MKR", name: "Maker", logo: "https://cryptologos.cc/logos/maker-mkr-logo.png?v=035", price: 1850, change24h: -0.9, marketCap: 1700000000, volume24h: 95000000, trendScore: 64 },
-  { rank: 18, symbol: "BAL", name: "Balancer", logo: "https://cryptologos.cc/logos/balancer-bal-logo.png?v=035", price: 3.5, change24h: 2.4, marketCap: 280000000, volume24h: 25000000, trendScore: 55 },
-  { rank: 19, symbol: "1INCH", name: "1inch", logo: "https://cryptologos.cc/logos/1inch-1inch-logo.png?v=035", price: 0.45, change24h: 3.8, marketCap: 580000000, volume24h: 72000000, trendScore: 76 },
-  { rank: 20, symbol: "LDO", name: "Lido DAO", logo: "https://cryptologos.cc/logos/lido-dao-ldo-logo.png?v=035", price: 1.9, change24h: -2.8, marketCap: 1700000000, volume24h: 120000000, trendScore: 70 },
-  { rank: 21, symbol: "SAND", name: "The Sandbox", logo: "https://cryptologos.cc/logos/the-sandbox-sand-logo.png?v=035", price: 0.45, change24h: 7.2, marketCap: 1000000000, volume24h: 180000000, trendScore: 80, isNew: false },
-  { rank: 22, symbol: "MANA", name: "Decentraland", logo: "https://cryptologos.cc/logos/decentraland-mana-logo.png?v=035", price: 0.38, change24h: 5.5, marketCap: 820000000, volume24h: 140000000, trendScore: 77 },
-  { rank: 23, symbol: "GHST", name: "Aavegotchi", logo: "https://cryptologos.cc/logos/aavegotchi-ghst-logo.png?v=035", price: 1.1, change24h: 9.2, marketCap: 120000000, volume24h: 18000000, isNew: true, trendScore: 88 },
-  { rank: 24, symbol: "QCK", name: "QuickSwap", logo: "https://cryptologos.cc/logos/quickswap-quick-logo.png?v=035", price: 42, change24h: -1.8, marketCap: 320000000, volume24h: 45000000, isNew: true, trendScore: 60 },
-  { rank: 25, symbol: "APE", name: "ApeCoin", logo: "https://cryptologos.cc/logos/apecoin-ape-logo.png?v=035", price: 1.2, change24h: -3.5, marketCap: 700000000, volume24h: 95000000, trendScore: 66 },
-  { rank: 26, symbol: "FET", name: "Fetch.ai", logo: "https://cryptologos.cc/logos/fetch-ai-fet-logo.png?v=035", price: 2.1, change24h: 11.3, marketCap: 2200000000, volume24h: 420000000, trendScore: 94, isNew: true },
-  { rank: 27, symbol: "RENDER", name: "Render", logo: "https://cryptologos.cc/logos/render-token-rndr-logo.png?v=035", price: 7.5, change24h: 8.9, marketCap: 3800000000, volume24h: 350000000, trendScore: 90 },
-  { rank: 28, symbol: "OCEAN", name: "Ocean Protocol", logo: "https://cryptologos.cc/logos/ocean-protocol-ocean-logo.png?v=035", price: 0.85, change24h: 6.1, marketCap: 520000000, volume24h: 65000000, trendScore: 73, isNew: true },
-  { rank: 29, symbol: "STG", name: "Stargate", logo: "https://cryptologos.cc/logos/stargate-finance-stg-logo.png?v=035", price: 0.42, change24h: 3.2, marketCap: 280000000, volume24h: 35000000, trendScore: 61 },
-  { rank: 30, symbol: "AGIX", name: "SingularityNET", logo: "https://cryptologos.cc/logos/singularitynet-agix-logo.png?v=035", price: 0.78, change24h: 14.5, marketCap: 980000000, volume24h: 210000000, trendScore: 96, isNew: true },
+// Static data for native TwinFlame tokens
+const NATIVE_TOKENS: CoinData[] = [
+  { rank: 0, symbol: "BLAZE", name: "TwinFlame BLAZE", logo: TOKEN_LOGOS.BLAZE, price: 0.25, change24h: 12.5, marketCap: 25000000, volume24h: 3400000, supplyAPY: 4.2, trendScore: 98, isNew: true, category: "defi" },
+  { rank: 0, symbol: "EMBER", name: "TwinFlame EMBER", logo: TOKEN_LOGOS.EMBER, price: 0.20, change24h: 8.7, marketCap: 20000000, volume24h: 2800000, supplyAPY: 5.8, trendScore: 92, category: "defi" },
+  { rank: 0, symbol: "EQT", name: "TwinFlame Equity", logo: TOKEN_LOGOS.EQT, price: 2.50, change24h: -2.1, marketCap: 12500000, volume24h: 850000, supplyAPY: 3.1, trendScore: 65, category: "defi" },
 ];
 
-const TABS = ["Top Coins", "New Coins", "Gainers", "Losers", "Trending"] as const;
+// Category mapping for CoinGecko tokens
+const TOKEN_CATEGORIES: Record<string, string> = {
+  "matic-network": "l1", weth: "l1", "usd-coin": "stablecoin", tether: "stablecoin",
+  "wrapped-bitcoin": "l1", aave: "defi", chainlink: "oracle", uniswap: "defi",
+  "curve-dao-token": "defi", sushi: "defi", "the-graph": "infrastructure",
+  havven: "defi", "compound-governance-token": "defi", maker: "defi",
+  balancer: "defi", "1inch": "defi", dydx: "defi", "lido-dao": "defi",
+  "rocket-pool": "defi", "frax-share": "defi", quickswap: "defi",
+  "stargate-finance": "defi", aavegotchi: "gaming", "the-sandbox": "gaming",
+  decentraland: "gaming", apecoin: "gaming", "render-token": "ai",
+  "fetch-ai": "ai", "ocean-protocol": "ai", "singularitynet": "ai",
+  dai: "stablecoin", frax: "stablecoin", "wrapped-steth": "defi",
+  "staked-ether": "defi", "ethereum-name-service": "infrastructure",
+  optimism: "l2", arbitrum: "l2", "immutable-x": "gaming",
+  "axie-infinity": "gaming", gala: "gaming", illuvium: "gaming",
+  "yearn-finance": "defi", pendle: "defi", gmx: "defi", magic: "gaming",
+  "radiant-capital": "defi", dogecoin: "meme", "shiba-inu": "meme",
+  pepe: "meme", floki: "meme", "worldcoin-wld": "ai",
+  "ondo-finance": "defi", ethena: "defi", wormhole: "infrastructure",
+  starknet: "l2", celestia: "l1", "sei-network": "l1", sui: "l1",
+  aptos: "l1", "injective-protocol": "defi", cosmos: "l1", polkadot: "l1",
+  "avalanche-2": "l1", solana: "l1", near: "l1", fantom: "l1",
+  algorand: "l1", stellar: "l1", ripple: "l1", cardano: "l1",
+  bittensor: "ai", filecoin: "infrastructure", "theta-token": "infrastructure",
+  arweave: "infrastructure", jasmycoin: "infrastructure", chiliz: "gaming",
+  enjincoin: "gaming", superfarm: "gaming", blur: "nft", looksrare: "nft",
+  x2y2: "nft", "mask-network": "infrastructure", "band-protocol": "oracle",
+  api3: "oracle", storj: "infrastructure", ankr: "infrastructure",
+  skale: "l2", "celer-network": "infrastructure", cartesi: "l2",
+  biconomy: "infrastructure", dodo: "defi", "perpetual-protocol": "defi",
+  "spell-token": "defi", "kyber-network-crystal": "defi", "0x": "defi",
+  "republic-protocol": "defi", omisego: "infrastructure", polymath: "defi",
+  telcoin: "defi",
+};
+
+const TABS = ["All", "DeFi", "L1/L2", "Gaming", "AI", "Meme", "Stablecoin", "Gainers", "Losers"] as const;
+type SortKey = "marketCap" | "price" | "change24h" | "volume24h" | "name";
 
 const formatNum = (n: number) => {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
@@ -67,7 +77,6 @@ const formatNum = (n: number) => {
   return `$${n.toFixed(2)}`;
 };
 
-// Tiny inline sparkline SVG
 const MiniSparkline = ({ data, positive }: { data: number[]; positive: boolean }) => {
   if (!data || data.length < 2) return null;
   const min = Math.min(...data);
@@ -78,63 +87,114 @@ const MiniSparkline = ({ data, positive }: { data: number[]; positive: boolean }
   const points = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`).join(" ");
   return (
     <svg width={w} height={h} className="inline-block ml-1">
-      <polyline
-        points={points}
-        fill="none"
-        stroke={positive ? "hsl(142,70%,50%)" : "hsl(0,70%,50%)"}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <polyline points={points} fill="none" stroke={positive ? "hsl(142,70%,50%)" : "hsl(0,70%,50%)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 };
 
 const DexMarket = () => {
-  const [tab, setTab] = useState<typeof TABS[number]>("Top Coins");
+  const [tab, setTab] = useState<typeof TABS[number]>("All");
   const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortKey>("marketCap");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [visibleCount, setVisibleCount] = useState(50);
   const navigate = useNavigate();
   const { coins: liveCoins, loading, isLive, lastUpdated, refetch } = usePolygonMarketData();
 
-  // Merge live CoinGecko data with static data
-  const mergedCoins = useMemo((): CoinData[] => {
+  const toggleSort = (key: SortKey) => {
+    if (sortBy === key) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortBy(key); setSortDir("desc"); }
+  };
+
+  // Build full coin list from live CoinGecko data + native tokens
+  const allCoins = useMemo((): CoinData[] => {
     const liveMap = new Map<string, LiveCoinData>();
     liveCoins.forEach((lc) => {
-      // Map CoinGecko id back to our symbol
       const entry = Object.entries(COINGECKO_IDS).find(([, v]) => v === lc.id);
       if (entry) liveMap.set(entry[0], lc);
     });
 
-    return STATIC_COINS.map((sc) => {
-      const live = liveMap.get(sc.symbol);
+    const fromLive: CoinData[] = [];
+    const seen = new Set<string>();
+
+    // Add live CoinGecko tokens
+    Object.entries(COINGECKO_IDS).forEach(([sym, cgId]) => {
+      if (seen.has(cgId)) return;
+      seen.add(cgId);
+      const live = liveMap.get(sym);
       if (live) {
-        return {
-          ...sc,
-          price: typeof live.current_price === "number" ? live.current_price : sc.price,
-          change24h: typeof live.price_change_percentage_24h === "number" ? live.price_change_percentage_24h : sc.change24h,
-          marketCap: typeof live.market_cap === "number" ? live.market_cap : sc.marketCap,
-          volume24h: typeof live.total_volume === "number" ? live.total_volume : sc.volume24h,
-          logo: live.image || sc.logo,
+        fromLive.push({
+          rank: live.market_cap_rank || 999,
+          symbol: sym,
+          name: live.name,
+          logo: live.image,
+          price: live.current_price ?? 0,
+          change24h: live.price_change_percentage_24h ?? 0,
+          marketCap: live.market_cap ?? 0,
+          volume24h: live.total_volume ?? 0,
           sparkline: live.sparkline_in_7d?.price?.slice(-24),
           isLive: true,
-        };
+          category: TOKEN_CATEGORIES[cgId] || "other",
+          trendScore: Math.min(100, Math.abs(live.price_change_percentage_24h ?? 0) * 5 + (live.total_volume ?? 0) / 1e8),
+        });
       }
-      // Native tokens (BLAZE, EMBER, EQT) keep static data
-      return { ...sc, isLive: false };
     });
+
+    // Native tokens always included
+    return [...NATIVE_TOKENS, ...fromLive];
   }, [liveCoins]);
 
   const filtered = useMemo(() => {
-    let list = [...mergedCoins];
-    if (query) list = list.filter((c) => c.symbol.toLowerCase().includes(query.toLowerCase()) || c.name.toLowerCase().includes(query.toLowerCase()));
-    switch (tab) {
-      case "New Coins": return list.filter((c) => c.isNew);
-      case "Gainers": return list.filter((c) => c.change24h > 0).sort((a, b) => b.change24h - a.change24h);
-      case "Losers": return list.filter((c) => c.change24h < 0).sort((a, b) => a.change24h - b.change24h);
-      case "Trending": return list.sort((a, b) => (b.trendScore || 0) - (a.trendScore || 0));
-      default: return list.sort((a, b) => b.marketCap - a.marketCap);
+    let list = [...allCoins];
+
+    // Search filter
+    if (query) {
+      const q = query.toLowerCase();
+      list = list.filter(c => c.symbol.toLowerCase().includes(q) || c.name.toLowerCase().includes(q));
     }
-  }, [tab, query, mergedCoins]);
+
+    // Category filter
+    switch (tab) {
+      case "DeFi": list = list.filter(c => c.category === "defi"); break;
+      case "L1/L2": list = list.filter(c => c.category === "l1" || c.category === "l2"); break;
+      case "Gaming": list = list.filter(c => c.category === "gaming"); break;
+      case "AI": list = list.filter(c => c.category === "ai"); break;
+      case "Meme": list = list.filter(c => c.category === "meme"); break;
+      case "Stablecoin": list = list.filter(c => c.category === "stablecoin"); break;
+      case "Gainers": list = list.filter(c => c.change24h > 0).sort((a, b) => b.change24h - a.change24h); return list;
+      case "Losers": list = list.filter(c => c.change24h < 0).sort((a, b) => a.change24h - b.change24h); return list;
+    }
+
+    // Sort
+    const dir = sortDir === "desc" ? -1 : 1;
+    list.sort((a, b) => {
+      switch (sortBy) {
+        case "name": return dir * a.name.localeCompare(b.name);
+        case "price": return dir * (a.price - b.price);
+        case "change24h": return dir * (a.change24h - b.change24h);
+        case "volume24h": return dir * (a.volume24h - b.volume24h);
+        default: return dir * (a.marketCap - b.marketCap);
+      }
+    });
+
+    return list;
+  }, [tab, query, allCoins, sortBy, sortDir]);
+
+  const visible = filtered.slice(0, visibleCount);
+
+  const SortHeader = ({ label, sortKey, className = "" }: { label: string; sortKey: SortKey; className?: string }) => (
+    <th
+      className={`px-4 py-3 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors select-none ${className}`}
+      onClick={() => toggleSort(sortKey)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {sortBy === sortKey && (
+          <ArrowUpDown className="h-3 w-3 text-primary" />
+        )}
+      </span>
+    </th>
+  );
 
   return (
     <div className="space-y-6 py-4">
@@ -143,10 +203,9 @@ const DexMarket = () => {
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Polygon Market</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Discover tokens on Polygon — swap & earn APY in one click.
+              {allCoins.length} tokens — swap & earn APY in one click.
             </p>
           </div>
-          {/* Live status indicator */}
           <div className="flex items-center gap-2">
             <button onClick={refetch} className="p-1.5 rounded-md hover:bg-muted/30 transition-colors" title="Refresh prices">
               <RefreshCw className={`h-3.5 w-3.5 text-muted-foreground ${loading ? "animate-spin" : ""}`} />
@@ -181,22 +240,22 @@ const DexMarket = () => {
         </div>
       </motion.div>
 
-      {/* Search + Tabs */}
+      {/* Search + Category Tabs */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-xs">
+        <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search tokens…"
+            placeholder="Search by name, symbol, or category…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setVisibleCount(50); }}
             className="pl-9 border-border/50 bg-muted/20"
           />
         </div>
-        <div className="flex gap-1.5 overflow-x-auto">
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
           {TABS.map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => { setTab(t); setVisibleCount(50); }}
               className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                 tab === t ? "bg-primary text-primary-foreground" : "border border-border/50 bg-muted/20 text-muted-foreground hover:text-foreground"
               }`}
@@ -214,96 +273,73 @@ const DexMarket = () => {
             <thead>
               <tr className="border-b border-border/40">
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">#</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Token</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Price</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">24h</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground hidden sm:table-cell">Market Cap</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground hidden md:table-cell">Volume</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground hidden lg:table-cell">7d Chart</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground hidden lg:table-cell">Supply APY</th>
+                <SortHeader label="Token" sortKey="name" className="text-left" />
+                <SortHeader label="Price" sortKey="price" className="text-right" />
+                <SortHeader label="24h" sortKey="change24h" className="text-right" />
+                <SortHeader label="Market Cap" sortKey="marketCap" className="text-right hidden sm:table-cell" />
+                <SortHeader label="Volume" sortKey="volume24h" className="text-right hidden md:table-cell" />
+                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground hidden lg:table-cell">7d</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
               <AnimatePresence mode="popLayout">
-                {filtered.map((coin, i) => (
+                {visible.map((coin, i) => (
                   <motion.tr
                     key={coin.symbol}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    transition={{ delay: i * 0.02 }}
+                    transition={{ delay: Math.min(i * 0.01, 0.3) }}
                     layout
                     className="border-b border-border/20 transition-colors hover:bg-muted/20 cursor-pointer"
                     onClick={() => navigate(`/dex/token/${coin.symbol.toLowerCase()}`)}
                   >
-                    <td className="px-4 py-3 text-muted-foreground">
-                      <div className="flex items-center gap-1.5">
-                        {tab === "Trending" && (coin.trendScore || 0) > 90 && <Flame className="h-3 w-3 text-blaze" />}
-                        {coin.rank}
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                      <div className="flex items-center gap-1">
+                        {(coin.trendScore || 0) > 90 && <Flame className="h-3 w-3 text-blaze" />}
+                        {coin.rank > 0 ? coin.rank : "—"}
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <img src={coin.logo} alt="" className="h-7 w-7 rounded-full" />
+                        <img src={coin.logo} alt="" className="h-7 w-7 rounded-full" onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }} />
                         <div>
                           <div className="flex items-center gap-1">
                             <span className="font-semibold text-foreground">{coin.symbol}</span>
-                            {coin.isLive && (
-                              <span className="h-1.5 w-1.5 rounded-full bg-[hsl(142,70%,50%)]" title="Live price" />
+                            {coin.isLive && <span className="h-1.5 w-1.5 rounded-full bg-[hsl(142,70%,50%)]" title="Live" />}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <p className="text-[10px] text-muted-foreground">{coin.name}</p>
+                            {coin.category && (
+                              <span className="rounded bg-muted/30 px-1 py-0.5 text-[8px] uppercase text-muted-foreground">{coin.category}</span>
                             )}
                           </div>
-                          <p className="text-[10px] text-muted-foreground">{coin.name}</p>
                         </div>
                         {coin.isNew && (
                           <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">NEW</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-foreground">
-                      <motion.span
-                        key={coin.price}
-                        initial={{ color: "hsl(var(--foreground))" }}
-                        animate={{ color: "hsl(var(--foreground))" }}
-                        className="tabular-nums"
-                      >
-                        ${coin.price != null && coin.price < 1 ? coin.price.toFixed(4) : (coin.price ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </motion.span>
+                    <td className="px-4 py-3 text-right font-medium text-foreground tabular-nums">
+                      ${coin.price < 0.01 ? coin.price.toFixed(6) : coin.price < 1 ? coin.price.toFixed(4) : coin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className={`px-4 py-3 text-right font-semibold ${coin.change24h >= 0 ? "text-[hsl(142,70%,50%)]" : "text-destructive"}`}>
                       <div className="flex items-center justify-end gap-1">
                         {coin.change24h >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                        <span className="tabular-nums">
-                          {(coin.change24h ?? 0) >= 0 ? "+" : ""}{(coin.change24h ?? 0).toFixed(2)}%
-                        </span>
+                        <span className="tabular-nums">{coin.change24h >= 0 ? "+" : ""}{coin.change24h.toFixed(2)}%</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right text-foreground hidden sm:table-cell tabular-nums">{formatNum(coin.marketCap)}</td>
                     <td className="px-4 py-3 text-right text-foreground hidden md:table-cell tabular-nums">{formatNum(coin.volume24h)}</td>
                     <td className="px-4 py-3 text-right hidden lg:table-cell">
-                      {coin.sparkline ? (
-                        <MiniSparkline data={coin.sparkline} positive={coin.change24h >= 0} />
-                      ) : (
-                        <span className="text-muted-foreground text-[10px]">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right hidden lg:table-cell">
-                      {coin.supplyAPY ? (
-                        <span className="font-semibold text-[hsl(142,70%,50%)]">{coin.supplyAPY}%</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
+                      {coin.sparkline ? <MiniSparkline data={coin.sparkline} positive={coin.change24h >= 0} /> : <span className="text-muted-foreground text-[10px]">—</span>}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                         <Link to="/dex/trade">
                           <Button size="sm" className="h-7 bg-gradient-fire text-primary-foreground text-[10px] px-2 hover:opacity-90">
-                            <Zap className="mr-0.5 h-3 w-3" /> Swap & Earn
-                          </Button>
-                        </Link>
-                        <Link to="/dex/lend">
-                          <Button size="sm" variant="outline" className="h-7 text-[10px] px-2 hidden lg:flex">
-                            Create P2P
+                            <Zap className="mr-0.5 h-3 w-3" /> Swap
                           </Button>
                         </Link>
                       </div>
@@ -312,13 +348,26 @@ const DexMarket = () => {
                 ))}
               </AnimatePresence>
               {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center text-sm text-muted-foreground">No tokens found</td>
-                </tr>
+                <tr><td colSpan={8} className="py-12 text-center text-sm text-muted-foreground">No tokens found</td></tr>
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Load More */}
+        {visibleCount < filtered.length && (
+          <div className="flex justify-center border-t border-border/20 p-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setVisibleCount(v => v + 50)}
+              className="gap-1.5"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+              Load More ({filtered.length - visibleCount} remaining)
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );
