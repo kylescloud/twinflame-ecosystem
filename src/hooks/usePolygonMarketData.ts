@@ -1,14 +1,37 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-// CoinGecko IDs for Polygon ecosystem tokens
+// CoinGecko IDs for Polygon ecosystem tokens — expanded list
 const COINGECKO_IDS: Record<string, string> = {
   POL: "matic-network",
   WETH: "weth",
   USDC: "usd-coin",
+  USDT: "tether",
   WBTC: "wrapped-bitcoin",
   AAVE: "aave",
   LINK: "chainlink",
+  UNI: "uniswap",
+  CRV: "curve-dao-token",
+  SUSHI: "sushi",
+  GRT: "the-graph",
+  SNX: "havven",
+  COMP: "compound-governance-token",
+  MKR: "maker",
+  BAL: "balancer",
+  "1INCH": "1inch",
+  DYDX: "dydx",
+  LDO: "lido-dao",
+  RPL: "rocket-pool",
+  FXS: "frax-share",
   QCK: "quickswap",
+  STG: "stargate-finance",
+  GHST: "aavegotchi",
+  SAND: "the-sandbox",
+  MANA: "decentraland",
+  APE: "apecoin",
+  RENDER: "render-token",
+  FET: "fetch-ai",
+  OCEAN: "ocean-protocol",
+  AGIX: "singularitynet",
 };
 
 export interface LiveCoinData {
@@ -21,6 +44,16 @@ export interface LiveCoinData {
   market_cap: number;
   total_volume: number;
   market_cap_rank: number;
+  high_24h?: number;
+  low_24h?: number;
+  ath?: number;
+  ath_date?: string;
+  atl?: number;
+  atl_date?: string;
+  circulating_supply?: number;
+  total_supply?: number;
+  max_supply?: number | null;
+  fully_diluted_valuation?: number;
   sparkline_in_7d?: { price: number[] };
 }
 
@@ -33,7 +66,7 @@ interface UsePolygonMarketDataReturn {
   refetch: () => void;
 }
 
-const POLL_INTERVAL = 30_000; // 30s — CoinGecko free tier limit
+const POLL_INTERVAL = 30_000;
 const API_BASE = "https://api.coingecko.com/api/v3";
 
 export function usePolygonMarketData(): UsePolygonMarketDataReturn {
@@ -47,11 +80,10 @@ export function usePolygonMarketData(): UsePolygonMarketDataReturn {
   const fetchData = useCallback(async () => {
     try {
       const ids = Object.values(COINGECKO_IDS).join(",");
-      const url = `${API_BASE}/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=50&page=1&sparkline=true&price_change_percentage=24h`;
+      const url = `${API_BASE}/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=100&page=1&sparkline=true&price_change_percentage=24h`;
 
       const res = await fetch(url);
       if (!res.ok) {
-        // Rate limited — keep stale data, mark not live
         if (res.status === 429) {
           setIsLive(false);
           return;
@@ -84,7 +116,6 @@ export function usePolygonMarketData(): UsePolygonMarketDataReturn {
   return { coins, loading, error, lastUpdated, isLive, refetch: fetchData };
 }
 
-// Map CoinGecko data back to our symbol-keyed format
 export function getCoinGeckoSymbol(cgId: string): string | undefined {
   return Object.entries(COINGECKO_IDS).find(([, v]) => v === cgId)?.[0];
 }
