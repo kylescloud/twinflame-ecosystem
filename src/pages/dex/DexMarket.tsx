@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Search, TrendingUp, TrendingDown, Flame, Zap, Wifi, WifiOff, RefreshCw, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,13 +29,33 @@ const STATIC_COINS: CoinData[] = [
   { rank: 1, symbol: "POL", name: "Polygon", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png?v=035", price: 0.52, change24h: 3.4, marketCap: 5200000000, volume24h: 320000000, supplyAPY: 3.5, trendScore: 95 },
   { rank: 2, symbol: "WETH", name: "Wrapped Ether", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png?v=035", price: 3450, change24h: 1.2, marketCap: 415000000000, volume24h: 18000000000, supplyAPY: 2.8, trendScore: 88 },
   { rank: 3, symbol: "USDC", name: "USD Coin", logo: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png?v=035", price: 1.0, change24h: 0.01, marketCap: 33000000000, volume24h: 5800000000, supplyAPY: 6.2, trendScore: 70 },
-  { rank: 4, symbol: "BLAZE", name: "TwinFlame BLAZE", logo: TOKEN_LOGOS.BLAZE, price: 0.25, change24h: 12.5, marketCap: 25000000, volume24h: 3400000, supplyAPY: 4.2, trendScore: 98, isNew: true },
-  { rank: 5, symbol: "EMBER", name: "TwinFlame EMBER", logo: TOKEN_LOGOS.EMBER, price: 0.20, change24h: 8.7, marketCap: 20000000, volume24h: 2800000, supplyAPY: 5.8, trendScore: 92 },
-  { rank: 6, symbol: "EQT", name: "TwinFlame Equity", logo: TOKEN_LOGOS.EQT, price: 2.50, change24h: -2.1, marketCap: 12500000, volume24h: 850000, supplyAPY: 3.1, trendScore: 65 },
-  { rank: 7, symbol: "WBTC", name: "Wrapped Bitcoin", logo: "https://cryptologos.cc/logos/wrapped-bitcoin-wbtc-logo.png?v=035", price: 98500, change24h: 0.8, marketCap: 13500000000, volume24h: 580000000, trendScore: 80 },
-  { rank: 8, symbol: "AAVE", name: "Aave", logo: "https://cryptologos.cc/logos/aave-aave-logo.png?v=035", price: 285, change24h: -3.4, marketCap: 4200000000, volume24h: 210000000, trendScore: 72 },
-  { rank: 9, symbol: "LINK", name: "Chainlink", logo: "https://cryptologos.cc/logos/chainlink-link-logo.png?v=035", price: 18.5, change24h: 5.2, marketCap: 11000000000, volume24h: 850000000, trendScore: 85 },
-  { rank: 10, symbol: "QCK", name: "QuickSwap", logo: "https://cryptologos.cc/logos/quickswap-quick-logo.png?v=035", price: 42, change24h: -1.8, marketCap: 320000000, volume24h: 45000000, isNew: true, trendScore: 60 },
+  { rank: 4, symbol: "USDT", name: "Tether", logo: "https://cryptologos.cc/logos/tether-usdt-logo.png?v=035", price: 1.0, change24h: 0.02, marketCap: 120000000000, volume24h: 45000000000, supplyAPY: 5.8, trendScore: 72 },
+  { rank: 5, symbol: "BLAZE", name: "TwinFlame BLAZE", logo: TOKEN_LOGOS.BLAZE, price: 0.25, change24h: 12.5, marketCap: 25000000, volume24h: 3400000, supplyAPY: 4.2, trendScore: 98, isNew: true },
+  { rank: 6, symbol: "EMBER", name: "TwinFlame EMBER", logo: TOKEN_LOGOS.EMBER, price: 0.20, change24h: 8.7, marketCap: 20000000, volume24h: 2800000, supplyAPY: 5.8, trendScore: 92 },
+  { rank: 7, symbol: "EQT", name: "TwinFlame Equity", logo: TOKEN_LOGOS.EQT, price: 2.50, change24h: -2.1, marketCap: 12500000, volume24h: 850000, supplyAPY: 3.1, trendScore: 65 },
+  { rank: 8, symbol: "WBTC", name: "Wrapped Bitcoin", logo: "https://cryptologos.cc/logos/wrapped-bitcoin-wbtc-logo.png?v=035", price: 98500, change24h: 0.8, marketCap: 13500000000, volume24h: 580000000, trendScore: 80 },
+  { rank: 9, symbol: "AAVE", name: "Aave", logo: "https://cryptologos.cc/logos/aave-aave-logo.png?v=035", price: 285, change24h: -3.4, marketCap: 4200000000, volume24h: 210000000, trendScore: 72 },
+  { rank: 10, symbol: "LINK", name: "Chainlink", logo: "https://cryptologos.cc/logos/chainlink-link-logo.png?v=035", price: 18.5, change24h: 5.2, marketCap: 11000000000, volume24h: 850000000, trendScore: 85 },
+  { rank: 11, symbol: "UNI", name: "Uniswap", logo: "https://cryptologos.cc/logos/uniswap-uni-logo.png?v=035", price: 7.2, change24h: 2.1, marketCap: 5400000000, volume24h: 320000000, trendScore: 82 },
+  { rank: 12, symbol: "CRV", name: "Curve DAO", logo: "https://cryptologos.cc/logos/curve-dao-token-crv-logo.png?v=035", price: 0.85, change24h: -1.5, marketCap: 1100000000, volume24h: 180000000, trendScore: 68 },
+  { rank: 13, symbol: "SUSHI", name: "SushiSwap", logo: "https://cryptologos.cc/logos/sushiswap-sushi-logo.png?v=035", price: 1.2, change24h: 4.3, marketCap: 350000000, volume24h: 65000000, trendScore: 74 },
+  { rank: 14, symbol: "GRT", name: "The Graph", logo: "https://cryptologos.cc/logos/the-graph-grt-logo.png?v=035", price: 0.22, change24h: 6.8, marketCap: 2100000000, volume24h: 150000000, trendScore: 78, isNew: false },
+  { rank: 15, symbol: "SNX", name: "Synthetix", logo: "https://cryptologos.cc/logos/synthetix-network-token-snx-logo.png?v=035", price: 2.8, change24h: -4.2, marketCap: 900000000, volume24h: 85000000, trendScore: 62 },
+  { rank: 16, symbol: "COMP", name: "Compound", logo: "https://cryptologos.cc/logos/compound-comp-logo.png?v=035", price: 52, change24h: 1.8, marketCap: 520000000, volume24h: 42000000, trendScore: 58 },
+  { rank: 17, symbol: "MKR", name: "Maker", logo: "https://cryptologos.cc/logos/maker-mkr-logo.png?v=035", price: 1850, change24h: -0.9, marketCap: 1700000000, volume24h: 95000000, trendScore: 64 },
+  { rank: 18, symbol: "BAL", name: "Balancer", logo: "https://cryptologos.cc/logos/balancer-bal-logo.png?v=035", price: 3.5, change24h: 2.4, marketCap: 280000000, volume24h: 25000000, trendScore: 55 },
+  { rank: 19, symbol: "1INCH", name: "1inch", logo: "https://cryptologos.cc/logos/1inch-1inch-logo.png?v=035", price: 0.45, change24h: 3.8, marketCap: 580000000, volume24h: 72000000, trendScore: 76 },
+  { rank: 20, symbol: "LDO", name: "Lido DAO", logo: "https://cryptologos.cc/logos/lido-dao-ldo-logo.png?v=035", price: 1.9, change24h: -2.8, marketCap: 1700000000, volume24h: 120000000, trendScore: 70 },
+  { rank: 21, symbol: "SAND", name: "The Sandbox", logo: "https://cryptologos.cc/logos/the-sandbox-sand-logo.png?v=035", price: 0.45, change24h: 7.2, marketCap: 1000000000, volume24h: 180000000, trendScore: 80, isNew: false },
+  { rank: 22, symbol: "MANA", name: "Decentraland", logo: "https://cryptologos.cc/logos/decentraland-mana-logo.png?v=035", price: 0.38, change24h: 5.5, marketCap: 820000000, volume24h: 140000000, trendScore: 77 },
+  { rank: 23, symbol: "GHST", name: "Aavegotchi", logo: "https://cryptologos.cc/logos/aavegotchi-ghst-logo.png?v=035", price: 1.1, change24h: 9.2, marketCap: 120000000, volume24h: 18000000, isNew: true, trendScore: 88 },
+  { rank: 24, symbol: "QCK", name: "QuickSwap", logo: "https://cryptologos.cc/logos/quickswap-quick-logo.png?v=035", price: 42, change24h: -1.8, marketCap: 320000000, volume24h: 45000000, isNew: true, trendScore: 60 },
+  { rank: 25, symbol: "APE", name: "ApeCoin", logo: "https://cryptologos.cc/logos/apecoin-ape-logo.png?v=035", price: 1.2, change24h: -3.5, marketCap: 700000000, volume24h: 95000000, trendScore: 66 },
+  { rank: 26, symbol: "FET", name: "Fetch.ai", logo: "https://cryptologos.cc/logos/fetch-ai-fet-logo.png?v=035", price: 2.1, change24h: 11.3, marketCap: 2200000000, volume24h: 420000000, trendScore: 94, isNew: true },
+  { rank: 27, symbol: "RENDER", name: "Render", logo: "https://cryptologos.cc/logos/render-token-rndr-logo.png?v=035", price: 7.5, change24h: 8.9, marketCap: 3800000000, volume24h: 350000000, trendScore: 90 },
+  { rank: 28, symbol: "OCEAN", name: "Ocean Protocol", logo: "https://cryptologos.cc/logos/ocean-protocol-ocean-logo.png?v=035", price: 0.85, change24h: 6.1, marketCap: 520000000, volume24h: 65000000, trendScore: 73, isNew: true },
+  { rank: 29, symbol: "STG", name: "Stargate", logo: "https://cryptologos.cc/logos/stargate-finance-stg-logo.png?v=035", price: 0.42, change24h: 3.2, marketCap: 280000000, volume24h: 35000000, trendScore: 61 },
+  { rank: 30, symbol: "AGIX", name: "SingularityNET", logo: "https://cryptologos.cc/logos/singularitynet-agix-logo.png?v=035", price: 0.78, change24h: 14.5, marketCap: 980000000, volume24h: 210000000, trendScore: 96, isNew: true },
 ];
 
 const TABS = ["Top Coins", "New Coins", "Gainers", "Losers", "Trending"] as const;
@@ -73,6 +93,7 @@ const MiniSparkline = ({ data, positive }: { data: number[]; positive: boolean }
 const DexMarket = () => {
   const [tab, setTab] = useState<typeof TABS[number]>("Top Coins");
   const [query, setQuery] = useState("");
+  const navigate = useNavigate();
   const { coins: liveCoins, loading, isLive, lastUpdated, refetch } = usePolygonMarketData();
 
   // Merge live CoinGecko data with static data
@@ -213,7 +234,8 @@ const DexMarket = () => {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ delay: i * 0.02 }}
                     layout
-                    className="border-b border-border/20 transition-colors hover:bg-muted/20"
+                    className="border-b border-border/20 transition-colors hover:bg-muted/20 cursor-pointer"
+                    onClick={() => navigate(`/dex/token/${coin.symbol.toLowerCase()}`)}
                   >
                     <td className="px-4 py-3 text-muted-foreground">
                       <div className="flex items-center gap-1.5">
