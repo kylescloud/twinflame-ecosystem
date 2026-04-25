@@ -101,23 +101,42 @@ export async function getSignedContract(address: string, abi: string[], provider
   return new Contract(address, abi, signer);
 }
 
+// ── Native TwinFlame token USD anchor prices (used for cross-pair calc) ──
+export const NATIVE_USD_PRICES: Record<string, number> = {
+  BLAZE: 0.10,   // $0.10 anchor
+  EMBER: 0.095,  // ~5% discount vs BLAZE → preserves 1 BLAZE = 1.05 EMBER
+  EQT: 1.00,     // $1.00 dividend-bearing security token
+};
+
 // ── Simulated swap calculation (used when contracts aren't deployed) ──
+// For native trinity pairs, uses fixed protocol rates. For all other tokens,
+// uses live USD prices (passed in) to derive an output amount.
 export function simulateSwap(
   tokenIn: string,
   tokenOut: string,
-  amountIn: number
+  amountIn: number,
+  priceInUsd?: number,
+  priceOutUsd?: number,
 ): { amountOut: number; fee: number; burnAmount: number; rewardAmount: number; dividendAmount: number } {
-  let rate = 1;
-  // BLAZE → EMBER: 5% premium (1 BLAZE = 1.05 EMBER)
+  let rate = 0;
+  // ── Fixed protocol rates for native trinity pairs ──
   if (tokenIn === "BLAZE" && tokenOut === "EMBER") rate = 1.05;
-  // EMBER → BLAZE: 10% discount (1 EMBER = 0.9 BLAZE)
   else if (tokenIn === "EMBER" && tokenOut === "BLAZE") rate = 0.9;
-  // BLAZE → EQT or EQT → BLAZE: market rate simulation
-  else if (tokenIn === "BLAZE" && tokenOut === "EQT") rate = 10;
-  else if (tokenIn === "EQT" && tokenOut === "BLAZE") rate = 0.1;
-  // EMBER → EQT or EQT → EMBER
-  else if (tokenIn === "EMBER" && tokenOut === "EQT") rate = 9.5;
-  else if (tokenIn === "EQT" && tokenOut === "EMBER") rate = 0.105;
+  else if (tokenIn === "BLAZE" && tokenOut === "EQT") rate = 0.1;   // 10 BLAZE = 1 EQT
+  else if (tokenIn === "EQT" && tokenOut === "BLAZE") rate = 10;
+  else if (tokenIn === "EMBER" && tokenOut === "EQT") rate = 0.105;
+  else if (tokenIn === "EQT" && tokenOut === "EMBER") rate = 9.5;
+  else if (tokenIn === tokenOut) rate = 1;
+  else {
+    // ── USD price-derived rate for any other token pair ──
+    const pIn = priceInUsd ?? NATIVE_USD_PRICES[tokenIn];
+    const pOut = priceOutUsd ?? NATIVE_USD_PRICES[tokenOut];
+    if (pIn && pOut && pOut > 0) {
+      rate = pIn / pOut;
+    } else {
+      rate = 1; // fallback when prices unavailable
+    }
+  }
 
   const gross = amountIn * rate;
   const feeRate = FEE_CONFIG.PROTOCOL_FEE_BPS / 10000;
