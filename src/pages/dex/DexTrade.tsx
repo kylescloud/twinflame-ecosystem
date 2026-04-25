@@ -10,14 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { TOKEN_LOGOS } from "@/lib/tokenAssets";
-import { simulateSwap, FEE_CONFIG, CONTRACTS } from "@/lib/contracts";
-import TokenSelectorModal, { ALL_TOKENS, type TokenDef } from "@/components/dex/TokenSelectorModal";
-
-const TOKENS = [
-  { symbol: "BLAZE", logo: TOKEN_LOGOS.BLAZE, color: "text-blaze", bg: "bg-blaze/10", border: "border-blaze/30" },
-  { symbol: "EMBER", logo: TOKEN_LOGOS.EMBER, color: "text-ember", bg: "bg-ember/10", border: "border-ember/30" },
-  { symbol: "EQT", logo: TOKEN_LOGOS.EQT, color: "text-equity", bg: "bg-equity/10", border: "border-equity/30" },
-];
+import { simulateSwap, FEE_CONFIG, CONTRACTS, NATIVE_USD_PRICES } from "@/lib/contracts";
+import TokenSelectorModal, { type TokenDef } from "@/components/dex/TokenSelectorModal";
+import { usePolygonMarketData, COINGECKO_IDS } from "@/hooks/usePolygonMarketData";
 
 const SLIPPAGE_OPTS = [0.1, 0.5, 1.0];
 
@@ -32,14 +27,63 @@ const timeAgo = (d: Date) => {
   return `${Math.floor(s / 86400)}d ago`;
 };
 
-const SUPPLY_APY: Record<string, number> = { BLAZE: 4.2, EMBER: 5.8, EQT: 3.1 };
+const SUPPLY_APY: Record<string, number> = {
+  BLAZE: 4.2, EMBER: 5.8, EQT: 3.1, USDC: 6.4, USDT: 6.1, DAI: 5.9,
+  WETH: 3.2, WBTC: 2.4, POL: 4.8,
+};
+
+const NATIVE_STYLE: Record<string, { color: string; bg: string; border: string }> = {
+  BLAZE: { color: "text-blaze", bg: "bg-blaze/10", border: "border-blaze/30" },
+  EMBER: { color: "text-ember", bg: "bg-ember/10", border: "border-ember/30" },
+  EQT:   { color: "text-equity", bg: "bg-equity/10", border: "border-equity/30" },
+};
+const styleFor = (symbol: string) =>
+  NATIVE_STYLE[symbol] ?? { color: "text-foreground", bg: "bg-muted/20", border: "border-border/40" };
 
 const DexTrade = () => {
   const { address, connect, isConnecting, shortAddress } = useWallet();
   const { toast } = useToast();
+  const { coins } = usePolygonMarketData();
 
-  const [fromIdx, setFromIdx] = useState(0);
-  const [toIdx, setToIdx] = useState(1);
+  // Unified token list: native trinity + all live Polygon market tokens
+  const allTokens: TokenDef[] = useMemo(() => {
+    const native: TokenDef[] = [
+      { symbol: "BLAZE", name: "TwinFlame BLAZE", logo: TOKEN_LOGOS.BLAZE, balance: "0.00", color: "text-blaze" },
+      { symbol: "EMBER", name: "TwinFlame EMBER", logo: TOKEN_LOGOS.EMBER, balance: "0.00", color: "text-ember" },
+      { symbol: "EQT",   name: "TwinFlame Equity", logo: TOKEN_LOGOS.EQT,  balance: "0.00", color: "text-equity" },
+    ];
+    const market: TokenDef[] = Object.keys(COINGECKO_IDS).map((sym) => {
+      const c = coins.find((co) => co.id === COINGECKO_IDS[sym]);
+      return {
+        symbol: sym,
+        name: c?.name ?? sym,
+        logo: c?.image ?? "https://cryptologos.cc/logos/polygon-matic-logo.png?v=035",
+        balance: "0.00",
+        color: "text-foreground",
+      };
+    });
+    const seen = new Set<string>();
+    return [...native, ...market].filter((t) => {
+      if (seen.has(t.symbol)) return false;
+      seen.add(t.symbol);
+      return true;
+    });
+  }, [coins]);
+
+  const priceUsd = (symbol: string): number | undefined => {
+    if (NATIVE_USD_PRICES[symbol] !== undefined) return NATIVE_USD_PRICES[symbol];
+    const cgId = COINGECKO_IDS[symbol];
+    if (!cgId) return undefined;
+    const c = coins.find((co) => co.id === cgId);
+    return c?.current_price ?? undefined;
+  };
+
+  const [fromToken, setFromToken] = useState<TokenDef>({
+    symbol: "BLAZE", name: "TwinFlame BLAZE", logo: TOKEN_LOGOS.BLAZE, balance: "0.00", color: "text-blaze",
+  });
+  const [toToken, setToToken] = useState<TokenDef>({
+    symbol: "EMBER", name: "TwinFlame EMBER", logo: TOKEN_LOGOS.EMBER, balance: "0.00", color: "text-ember",
+  });
   const [inputAmount, setInputAmount] = useState("");
   const [slippage, setSlippage] = useState(0.5);
   const [customSlippage, setCustomSlippage] = useState("");
@@ -50,36 +94,40 @@ const DexTrade = () => {
   const [isSwapping, setIsSwapping] = useState(false);
   const [instantYield, setInstantYield] = useState(true);
 
-  const fromToken = TOKENS[fromIdx];
-  const toToken = TOKENS[toIdx];
+  const fromStyle = styleFor(fromToken.symbol);
+  const toStyle = styleFor(toToken.symbol);
   const parsed = parseFloat(inputAmount);
   const isValid = !isNaN(parsed) && parsed > 0;
 
   const swapResult = useMemo(() => {
     if (!isValid) return null;
-    return simulateSwap(fromToken.symbol, toToken.symbol, parsed);
-  }, [parsed, isValid, fromToken.symbol, toToken.symbol]);
+    return simulateSwap(
+      fromToken.symbol,
+      toToken.symbol,
+      parsed,
+      priceUsd(fromToken.symbol),
+      priceUsd(toToken.symbol),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsed, isValid, fromToken.symbol, toToken.symbol, coins]);
 
   const minReceived = swapResult ? swapResult.amountOut * (1 - slippage / 100) : 0;
+  const usdValueIn = isValid ? parsed * (priceUsd(fromToken.symbol) ?? 0) : 0;
 
-  const flipTokens = () => { setFromIdx(toIdx); setToIdx(fromIdx); setInputAmount(""); };
+  const flipTokens = () => {
+    const f = fromToken; setFromToken(toToken); setToToken(f); setInputAmount("");
+  };
 
   const handleFromSelect = (token: TokenDef) => {
-    const idx = TOKENS.findIndex((t) => t.symbol === token.symbol);
-    if (idx >= 0) {
-      if (idx === toIdx) setToIdx(fromIdx);
-      setFromIdx(idx);
-      setInputAmount("");
-    }
+    if (token.symbol === toToken.symbol) setToToken(fromToken);
+    setFromToken(token);
+    setInputAmount("");
   };
 
   const handleToSelect = (token: TokenDef) => {
-    const idx = TOKENS.findIndex((t) => t.symbol === token.symbol);
-    if (idx >= 0) {
-      if (idx === fromIdx) setFromIdx(toIdx);
-      setToIdx(idx);
-      setInputAmount("");
-    }
+    if (token.symbol === fromToken.symbol) setFromToken(toToken);
+    setToToken(token);
+    setInputAmount("");
   };
 
   const handleCustomSlippage = (val: string) => {
@@ -109,8 +157,8 @@ const DexTrade = () => {
     setIsSwapping(false);
 
     toast({
-      title: instantYield ? "Swap & Supply Executed ⚡" : "Swap Executed",
-      description: instantYield
+      title: instantYield && toAPY > 0 ? "Swap & Supply Executed ⚡" : "Swap Executed",
+      description: instantYield && toAPY > 0
         ? `${parsed.toLocaleString()} ${fromToken.symbol} → ${swapResult.amountOut.toFixed(4)} ${toToken.symbol} supplied at ${toAPY}% APY. Fee: ${swapResult.fee.toFixed(6)}`
         : `${parsed.toLocaleString()} ${fromToken.symbol} → ${swapResult.amountOut.toFixed(4)} ${toToken.symbol} | Fee: ${swapResult.fee.toFixed(6)}`,
     });
