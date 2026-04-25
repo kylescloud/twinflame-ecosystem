@@ -141,8 +141,49 @@ const DexTrade = () => {
     ? (swapResult.amountOut * (toAPY / 100) * (7 / 365))
     : 0;
 
+  const validateSwapMath = (): { ok: boolean; reason?: string } => {
+    if (!swapResult || !isValid) return { ok: false, reason: "No quote available." };
+    const pIn = priceUsd(fromToken.symbol);
+    const pOut = priceUsd(toToken.symbol);
+    if (pIn === undefined || pIn <= 0) {
+      return { ok: false, reason: `Missing live USD price for ${fromToken.symbol}.` };
+    }
+    if (pOut === undefined || pOut <= 0) {
+      return { ok: false, reason: `Missing live USD price for ${toToken.symbol}.` };
+    }
+    // Expected gross out from price-derived rate, then apply protocol fee
+    const expectedGross = parsed * (pIn / pOut);
+    const expectedNet = expectedGross * (1 - FEE_CONFIG.PROTOCOL_FEE_BPS / 10000);
+    const displayed = swapResult.amountOut;
+    if (expectedNet <= 0) return { ok: false, reason: "Invalid price-derived rate." };
+    const drift = Math.abs(displayed - expectedNet) / expectedNet;
+    // Allow up to 2% drift (covers BLAZE/EMBER/EQT fixed protocol rates vs USD anchors)
+    const tolerance = 0.02;
+    const isNativePair =
+      NATIVE_USD_PRICES[fromToken.symbol] !== undefined &&
+      NATIVE_USD_PRICES[toToken.symbol] !== undefined;
+    if (!isNativePair && drift > tolerance) {
+      return {
+        ok: false,
+        reason: `Quote drift ${(drift * 100).toFixed(2)}% exceeds ${(tolerance * 100).toFixed(0)}% vs price-derived rate.`,
+      };
+    }
+    return { ok: true };
+  };
+
   const handleSwap = async () => {
     if (!isValid || !address || !swapResult) return;
+
+    const check = validateSwapMath();
+    if (!check.ok) {
+      toast({
+        title: "Swap math validation failed",
+        description: check.reason ?? "Unable to verify quote against live prices.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSwapping(true);
     await new Promise((r) => setTimeout(r, 1500));
 
