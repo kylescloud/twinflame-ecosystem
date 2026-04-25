@@ -488,12 +488,14 @@ const DexTrade = () => {
         onClose={() => setShowFromSelector(false)}
         onSelect={handleFromSelect}
         excludeSymbol={toToken.symbol}
+        tokens={allTokens}
       />
       <TokenSelectorModal
         open={showToSelector}
         onClose={() => setShowToSelector(false)}
         onSelect={handleToSelect}
         excludeSymbol={fromToken.symbol}
+        tokens={allTokens}
       />
     </div>
   );
