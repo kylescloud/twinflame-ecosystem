@@ -26,19 +26,21 @@ interface Props {
   onClose: () => void;
   onSelect: (token: TokenDef) => void;
   excludeSymbol?: string;
+  tokens?: TokenDef[];
 }
 
-const TokenSelectorModal = ({ open, onClose, onSelect, excludeSymbol }: Props) => {
+const TokenSelectorModal = ({ open, onClose, onSelect, excludeSymbol, tokens }: Props) => {
   const [query, setQuery] = useState("");
+  const list = tokens && tokens.length > 0 ? tokens : ALL_TOKENS;
 
-  const filtered = ALL_TOKENS.filter(
+  const filtered = list.filter(
     (t) =>
       t.symbol !== excludeSymbol &&
       (t.symbol.toLowerCase().includes(query.toLowerCase()) ||
         t.name.toLowerCase().includes(query.toLowerCase()))
   );
 
-  const popular = ALL_TOKENS.filter((t) => ["BLAZE", "EMBER", "EQT", "USDC"].includes(t.symbol) && t.symbol !== excludeSymbol);
+  const popular = list.filter((t) => ["BLAZE", "EMBER", "EQT", "USDC", "WETH", "POL"].includes(t.symbol) && t.symbol !== excludeSymbol).slice(0, 6);
 
   if (!open) return null;
 
