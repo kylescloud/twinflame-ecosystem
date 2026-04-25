@@ -324,7 +324,7 @@ const DexTrade = () => {
               </AnimatePresence>
 
               {/* From */}
-              <div className={`rounded-lg border ${fromToken.border} ${fromToken.bg} p-4`}>
+              <div className={`rounded-lg border ${fromStyle.border} ${fromStyle.bg} p-4`}>
                 <label className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">You send</label>
                 <div className="flex items-center gap-3">
                   <button
@@ -332,7 +332,7 @@ const DexTrade = () => {
                     className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-2 text-sm font-bold transition-colors hover:bg-muted/60"
                   >
                     <img src={fromToken.logo} alt="" className="h-6 w-6 rounded-full" />
-                    <span className={fromToken.color}>{fromToken.symbol}</span>
+                    <span className={fromStyle.color}>{fromToken.symbol}</span>
                     <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                   <Input
@@ -356,7 +356,7 @@ const DexTrade = () => {
               </div>
 
               {/* To */}
-              <div className={`rounded-lg border ${toToken.border} ${toToken.bg} p-4`}>
+              <div className={`rounded-lg border ${toStyle.border} ${toStyle.bg} p-4`}>
                 <label className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">You receive</label>
                 <div className="flex items-center gap-3">
                   <button
@@ -364,7 +364,7 @@ const DexTrade = () => {
                     className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-2 text-sm font-bold transition-colors hover:bg-muted/60"
                   >
                     <img src={toToken.logo} alt="" className="h-6 w-6 rounded-full" />
-                    <span className={toToken.color}>{toToken.symbol}</span>
+                    <span className={toStyle.color}>{toToken.symbol}</span>
                     <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                   <div className="flex-1 text-right text-xl font-semibold text-foreground">
