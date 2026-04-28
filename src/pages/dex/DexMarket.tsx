@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, TrendingUp, TrendingDown, Flame, Zap, Wifi, WifiOff, RefreshCw, Loader2, ChevronDown, ArrowUpDown, Filter } from "lucide-react";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TOKEN_LOGOS } from "@/lib/tokenAssets";
 import { usePolygonMarketData, COINGECKO_IDS, type LiveCoinData } from "@/hooks/usePolygonMarketData";
+import TokenPoolsRow from "@/components/dex/TokenPoolsRow";
 
 interface CoinData {
   rank: number;
@@ -98,6 +99,7 @@ const DexMarket = () => {
   const [sortBy, setSortBy] = useState<SortKey>("marketCap");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [visibleCount, setVisibleCount] = useState(50);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { coins: liveCoins, loading, isLive, lastUpdated, refetch } = usePolygonMarketData();
 
@@ -285,6 +287,7 @@ const DexMarket = () => {
             <tbody>
               <AnimatePresence mode="popLayout">
                 {visible.map((coin, i) => (
+                  <Fragment key={coin.symbol}>
                   <motion.tr
                     key={coin.symbol}
                     initial={{ opacity: 0, y: 10 }}
@@ -337,6 +340,21 @@ const DexMarket = () => {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[10px] px-2 border-border/50"
+                          onClick={() => {
+                            setExpanded((prev) => {
+                              const next = new Set(prev);
+                              next.has(coin.symbol) ? next.delete(coin.symbol) : next.add(coin.symbol);
+                              return next;
+                            });
+                          }}
+                        >
+                          <ChevronDown className={`mr-0.5 h-3 w-3 transition-transform ${expanded.has(coin.symbol) ? "rotate-180" : ""}`} />
+                          Pools
+                        </Button>
                         <Link to="/dex/trade">
                           <Button size="sm" className="h-7 bg-gradient-fire text-primary-foreground text-[10px] px-2 hover:opacity-90">
                             <Zap className="mr-0.5 h-3 w-3" /> Swap
@@ -345,7 +363,11 @@ const DexMarket = () => {
                       </div>
                     </td>
                   </motion.tr>
-                ))}
+                  {expanded.has(coin.symbol) && (
+                    <TokenPoolsRow key={`${coin.symbol}-pools`} symbol={coin.symbol} colSpan={8} />
+                  )}
+                </Fragment>
+              ))}
               </AnimatePresence>
               {filtered.length === 0 && (
                 <tr><td colSpan={8} className="py-12 text-center text-sm text-muted-foreground">No tokens found</td></tr>
