@@ -339,6 +339,21 @@ const DexMarket = () => {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[10px] px-2 border-border/50"
+                          onClick={() => {
+                            setExpanded((prev) => {
+                              const next = new Set(prev);
+                              next.has(coin.symbol) ? next.delete(coin.symbol) : next.add(coin.symbol);
+                              return next;
+                            });
+                          }}
+                        >
+                          <ChevronDown className={`mr-0.5 h-3 w-3 transition-transform ${expanded.has(coin.symbol) ? "rotate-180" : ""}`} />
+                          Pools
+                        </Button>
                         <Link to="/dex/trade">
                           <Button size="sm" className="h-7 bg-gradient-fire text-primary-foreground text-[10px] px-2 hover:opacity-90">
                             <Zap className="mr-0.5 h-3 w-3" /> Swap
@@ -347,7 +362,11 @@ const DexMarket = () => {
                       </div>
                     </td>
                   </motion.tr>
-                ))}
+                  {expanded.has(coin.symbol) && (
+                    <TokenPoolsRow key={`${coin.symbol}-pools`} symbol={coin.symbol} colSpan={8} />
+                  )}
+                </>
+              ))}
               </AnimatePresence>
               {filtered.length === 0 && (
                 <tr><td colSpan={8} className="py-12 text-center text-sm text-muted-foreground">No tokens found</td></tr>
