@@ -64,6 +64,7 @@ const DexHome = () => {
   const [amount, setAmount] = useState("");
   const [showFromSelector, setShowFromSelector] = useState(false);
   const [showToSelector, setShowToSelector] = useState(false);
+  const [quoteNonce, setQuoteNonce] = useState(0);
 
   const parsed = parseFloat(amount);
   const isValid = !isNaN(parsed) && parsed > 0;
@@ -77,17 +78,42 @@ const DexHome = () => {
       priceUsd(toToken.symbol),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parsed, isValid, fromToken.symbol, toToken.symbol, coins]);
+  }, [parsed, isValid, fromToken.symbol, toToken.symbol, coins, quoteNonce]);
 
-  const flipTokens = () => { const f = fromToken; setFromToken(toToken); setToToken(f); setAmount(""); };
+  const checkPrices = (a: TokenDef, b: TokenDef) => {
+    const missing: string[] = [];
+    if (priceUsd(a.symbol) === undefined) missing.push(a.symbol);
+    if (priceUsd(b.symbol) === undefined) missing.push(b.symbol);
+    if (missing.length) {
+      toast({
+        title: "Price data unavailable",
+        description: `Missing live price for ${missing.join(", ")}. Quote may be inaccurate.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const flipTokens = () => {
+    const f = fromToken;
+    setFromToken(toToken);
+    setToToken(f);
+    setQuoteNonce((n) => n + 1);
+    checkPrices(toToken, f);
+  };
 
   const handleFromSelect = (t: TokenDef) => {
-    if (t.symbol === toToken.symbol) setToToken(fromToken);
-    setFromToken(t); setAmount("");
+    let newTo = toToken;
+    if (t.symbol === toToken.symbol) { newTo = fromToken; setToToken(fromToken); }
+    setFromToken(t);
+    setQuoteNonce((n) => n + 1);
+    checkPrices(t, newTo);
   };
   const handleToSelect = (t: TokenDef) => {
-    if (t.symbol === fromToken.symbol) setFromToken(toToken);
-    setToToken(t); setAmount("");
+    let newFrom = fromToken;
+    if (t.symbol === fromToken.symbol) { newFrom = toToken; setFromToken(toToken); }
+    setToToken(t);
+    setQuoteNonce((n) => n + 1);
+    checkPrices(newFrom, t);
   };
 
   return (
