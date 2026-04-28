@@ -99,6 +99,7 @@ const DexMarket = () => {
   const [sortBy, setSortBy] = useState<SortKey>("marketCap");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [visibleCount, setVisibleCount] = useState(50);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { coins: liveCoins, loading, isLive, lastUpdated, refetch } = usePolygonMarketData();
 
