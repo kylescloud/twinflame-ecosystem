@@ -35,18 +35,87 @@ const HOT_P2P_OFFERS = [
 
 const DexDiscover = () => {
   const { address, connect, isConnecting } = useWallet();
-  const [fromIdx, setFromIdx] = useState(0);
-  const [toIdx, setToIdx] = useState(1);
+  const { toast } = useToast();
+  const { coins } = usePolygonMarketData();
+
+  const allTokens: TokenDef[] = useMemo(() => {
+    const market: TokenDef[] = Object.keys(COINGECKO_IDS).map((sym) => {
+      const c = coins.find((co) => co.id === COINGECKO_IDS[sym]);
+      return {
+        symbol: sym,
+        name: c?.name ?? sym,
+        logo: c?.image ?? "https://cryptologos.cc/logos/polygon-matic-logo.png?v=035",
+        balance: "0.00",
+        color: "text-foreground",
+      };
+    });
+    const seen = new Set<string>();
+    return [...NATIVE_TOKENS, ...market].filter((t) => {
+      if (seen.has(t.symbol)) return false;
+      seen.add(t.symbol);
+      return true;
+    });
+  }, [coins]);
+
+  const priceUsd = (symbol: string): number | undefined => {
+    if (NATIVE_USD_PRICES[symbol] !== undefined) return NATIVE_USD_PRICES[symbol];
+    const cgId = COINGECKO_IDS[symbol];
+    if (!cgId) return undefined;
+    const c = coins.find((co) => co.id === cgId);
+    return c?.current_price ?? undefined;
+  };
+
+  const [fromToken, setFromToken] = useState<TokenDef>(NATIVE_TOKENS[0]);
+  const [toToken, setToToken] = useState<TokenDef>(NATIVE_TOKENS[1]);
   const [amount, setAmount] = useState("");
+  const [showFromSelector, setShowFromSelector] = useState(false);
+  const [showToSelector, setShowToSelector] = useState(false);
+  const [quoteNonce, setQuoteNonce] = useState(0);
 
   const parsed = parseFloat(amount);
   const isValid = !isNaN(parsed) && parsed > 0;
   const result = useMemo(() => {
     if (!isValid) return null;
-    return simulateSwap(QUICK_TOKENS[fromIdx].symbol, QUICK_TOKENS[toIdx].symbol, parsed);
-  }, [parsed, isValid, fromIdx, toIdx]);
+    return simulateSwap(
+      fromToken.symbol,
+      toToken.symbol,
+      parsed,
+      priceUsd(fromToken.symbol),
+      priceUsd(toToken.symbol),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsed, isValid, fromToken, toToken, quoteNonce, coins]);
 
-  const flipTokens = () => { setFromIdx(toIdx); setToIdx(fromIdx); setAmount(""); };
+  const checkPrices = (a: TokenDef, b: TokenDef) => {
+    const missing: string[] = [];
+    if (priceUsd(a.symbol) === undefined) missing.push(a.symbol);
+    if (priceUsd(b.symbol) === undefined) missing.push(b.symbol);
+    if (missing.length > 0) {
+      toast({
+        title: "Price data missing",
+        description: `No live price for ${missing.join(", ")}. Quote may be inaccurate.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFromSelect = (t: TokenDef) => {
+    const next = t.symbol === toToken.symbol ? fromToken : t;
+    setFromToken(next);
+    setQuoteNonce((n) => n + 1);
+    checkPrices(next, toToken);
+  };
+  const handleToSelect = (t: TokenDef) => {
+    const next = t.symbol === fromToken.symbol ? toToken : t;
+    setToToken(next);
+    setQuoteNonce((n) => n + 1);
+    checkPrices(fromToken, next);
+  };
+  const flipTokens = () => {
+    setFromToken(toToken);
+    setToToken(fromToken);
+    setQuoteNonce((n) => n + 1);
+  };
 
   return (
     <div className="space-y-12 py-4">
