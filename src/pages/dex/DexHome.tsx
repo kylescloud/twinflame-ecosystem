@@ -30,18 +30,65 @@ const FEATURED_MARKETS = [
 const DexHome = () => {
   const { address, connect, isConnecting } = useWallet();
   const { toast } = useToast();
-  const [fromIdx, setFromIdx] = useState(0);
-  const [toIdx, setToIdx] = useState(1);
+  const { coins } = usePolygonMarketData();
+
+  const allTokens: TokenDef[] = useMemo(() => {
+    const market: TokenDef[] = Object.keys(COINGECKO_IDS).map((sym) => {
+      const c = coins.find((co) => co.id === COINGECKO_IDS[sym]);
+      return {
+        symbol: sym,
+        name: c?.name ?? sym,
+        logo: c?.image ?? "https://cryptologos.cc/logos/polygon-matic-logo.png?v=035",
+        balance: "0.00",
+        color: "text-foreground",
+      };
+    });
+    const seen = new Set<string>();
+    return [...NATIVE_TOKENS, ...market].filter((t) => {
+      if (seen.has(t.symbol)) return false;
+      seen.add(t.symbol);
+      return true;
+    });
+  }, [coins]);
+
+  const priceUsd = (symbol: string): number | undefined => {
+    if (NATIVE_USD_PRICES[symbol] !== undefined) return NATIVE_USD_PRICES[symbol];
+    const cgId = COINGECKO_IDS[symbol];
+    if (!cgId) return undefined;
+    const c = coins.find((co) => co.id === cgId);
+    return c?.current_price ?? undefined;
+  };
+
+  const [fromToken, setFromToken] = useState<TokenDef>(NATIVE_TOKENS[0]);
+  const [toToken, setToToken] = useState<TokenDef>(NATIVE_TOKENS[1]);
   const [amount, setAmount] = useState("");
+  const [showFromSelector, setShowFromSelector] = useState(false);
+  const [showToSelector, setShowToSelector] = useState(false);
 
   const parsed = parseFloat(amount);
   const isValid = !isNaN(parsed) && parsed > 0;
   const result = useMemo(() => {
     if (!isValid) return null;
-    return simulateSwap(QUICK_TOKENS[fromIdx].symbol, QUICK_TOKENS[toIdx].symbol, parsed);
-  }, [parsed, isValid, fromIdx, toIdx]);
+    return simulateSwap(
+      fromToken.symbol,
+      toToken.symbol,
+      parsed,
+      priceUsd(fromToken.symbol),
+      priceUsd(toToken.symbol),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsed, isValid, fromToken.symbol, toToken.symbol, coins]);
 
-  const flipTokens = () => { setFromIdx(toIdx); setToIdx(fromIdx); setAmount(""); };
+  const flipTokens = () => { const f = fromToken; setFromToken(toToken); setToToken(f); setAmount(""); };
+
+  const handleFromSelect = (t: TokenDef) => {
+    if (t.symbol === toToken.symbol) setToToken(fromToken);
+    setFromToken(t); setAmount("");
+  };
+  const handleToSelect = (t: TokenDef) => {
+    if (t.symbol === fromToken.symbol) setFromToken(toToken);
+    setToToken(t); setAmount("");
+  };
 
   return (
     <div className="space-y-12 py-4">
