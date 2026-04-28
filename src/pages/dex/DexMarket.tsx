@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TOKEN_LOGOS } from "@/lib/tokenAssets";
 import { usePolygonMarketData, COINGECKO_IDS, type LiveCoinData } from "@/hooks/usePolygonMarketData";
+import TokenPoolsRow from "@/components/dex/TokenPoolsRow";
 
 interface CoinData {
   rank: number;
