@@ -126,9 +126,13 @@ const DexHome = () => {
               <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">You send</label>
                 <div className="flex items-center gap-2">
-                  <button className="flex items-center gap-1.5 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm font-bold">
-                    <img src={QUICK_TOKENS[fromIdx].logo} alt="" className="h-5 w-5 rounded-full" />
-                    <span className={QUICK_TOKENS[fromIdx].color}>{QUICK_TOKENS[fromIdx].symbol}</span>
+                  <button
+                    onClick={() => setShowFromSelector(true)}
+                    className="flex items-center gap-1.5 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm font-bold transition-colors hover:bg-muted/50"
+                  >
+                    <img src={fromToken.logo} alt="" className="h-5 w-5 rounded-full" />
+                    <span className={fromToken.color}>{fromToken.symbol}</span>
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
                   </button>
                   <Input
                     type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)}
@@ -147,10 +151,14 @@ const DexHome = () => {
               <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">You receive</label>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm font-bold">
-                    <img src={QUICK_TOKENS[toIdx].logo} alt="" className="h-5 w-5 rounded-full" />
-                    <span className={QUICK_TOKENS[toIdx].color}>{QUICK_TOKENS[toIdx].symbol}</span>
-                  </div>
+                  <button
+                    onClick={() => setShowToSelector(true)}
+                    className="flex items-center gap-1.5 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm font-bold transition-colors hover:bg-muted/50"
+                  >
+                    <img src={toToken.logo} alt="" className="h-5 w-5 rounded-full" />
+                    <span className={toToken.color}>{toToken.symbol}</span>
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  </button>
                   <div className="flex-1 text-right text-lg font-semibold text-foreground">
                     {result ? result.amountOut.toFixed(4) : "0.00"}
                   </div>
