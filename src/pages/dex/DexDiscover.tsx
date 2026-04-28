@@ -3,19 +3,22 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   ArrowDownUp, ArrowRight, TrendingUp, Flame, Shield, Wallet,
-  Zap, Landmark, Globe,
+  Zap, Landmark, Globe, ChevronDown,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TOKEN_LOGOS } from "@/lib/tokenAssets";
-import { simulateSwap } from "@/lib/contracts";
+import { simulateSwap, NATIVE_USD_PRICES } from "@/lib/contracts";
 import { useWallet } from "@/hooks/useWallet";
+import { useToast } from "@/hooks/use-toast";
+import TokenSelectorModal, { type TokenDef } from "@/components/dex/TokenSelectorModal";
+import { usePolygonMarketData, COINGECKO_IDS } from "@/hooks/usePolygonMarketData";
 
-const QUICK_TOKENS = [
-  { symbol: "BLAZE", logo: TOKEN_LOGOS.BLAZE, color: "text-blaze" },
-  { symbol: "EMBER", logo: TOKEN_LOGOS.EMBER, color: "text-ember" },
-  { symbol: "EQT", logo: TOKEN_LOGOS.EQT, color: "text-equity" },
+const NATIVE_TOKENS: TokenDef[] = [
+  { symbol: "BLAZE", name: "TwinFlame BLAZE", logo: TOKEN_LOGOS.BLAZE, balance: "0.00", color: "text-blaze" },
+  { symbol: "EMBER", name: "TwinFlame EMBER", logo: TOKEN_LOGOS.EMBER, balance: "0.00", color: "text-ember" },
+  { symbol: "EQT",   name: "TwinFlame Equity", logo: TOKEN_LOGOS.EQT,  balance: "0.00", color: "text-equity" },
 ];
 
 const FEATURED_MARKETS = [
@@ -32,18 +35,87 @@ const HOT_P2P_OFFERS = [
 
 const DexDiscover = () => {
   const { address, connect, isConnecting } = useWallet();
-  const [fromIdx, setFromIdx] = useState(0);
-  const [toIdx, setToIdx] = useState(1);
+  const { toast } = useToast();
+  const { coins } = usePolygonMarketData();
+
+  const allTokens: TokenDef[] = useMemo(() => {
+    const market: TokenDef[] = Object.keys(COINGECKO_IDS).map((sym) => {
+      const c = coins.find((co) => co.id === COINGECKO_IDS[sym]);
+      return {
+        symbol: sym,
+        name: c?.name ?? sym,
+        logo: c?.image ?? "https://cryptologos.cc/logos/polygon-matic-logo.png?v=035",
+        balance: "0.00",
+        color: "text-foreground",
+      };
+    });
+    const seen = new Set<string>();
+    return [...NATIVE_TOKENS, ...market].filter((t) => {
+      if (seen.has(t.symbol)) return false;
+      seen.add(t.symbol);
+      return true;
+    });
+  }, [coins]);
+
+  const priceUsd = (symbol: string): number | undefined => {
+    if (NATIVE_USD_PRICES[symbol] !== undefined) return NATIVE_USD_PRICES[symbol];
+    const cgId = COINGECKO_IDS[symbol];
+    if (!cgId) return undefined;
+    const c = coins.find((co) => co.id === cgId);
+    return c?.current_price ?? undefined;
+  };
+
+  const [fromToken, setFromToken] = useState<TokenDef>(NATIVE_TOKENS[0]);
+  const [toToken, setToToken] = useState<TokenDef>(NATIVE_TOKENS[1]);
   const [amount, setAmount] = useState("");
+  const [showFromSelector, setShowFromSelector] = useState(false);
+  const [showToSelector, setShowToSelector] = useState(false);
+  const [quoteNonce, setQuoteNonce] = useState(0);
 
   const parsed = parseFloat(amount);
   const isValid = !isNaN(parsed) && parsed > 0;
   const result = useMemo(() => {
     if (!isValid) return null;
-    return simulateSwap(QUICK_TOKENS[fromIdx].symbol, QUICK_TOKENS[toIdx].symbol, parsed);
-  }, [parsed, isValid, fromIdx, toIdx]);
+    return simulateSwap(
+      fromToken.symbol,
+      toToken.symbol,
+      parsed,
+      priceUsd(fromToken.symbol),
+      priceUsd(toToken.symbol),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsed, isValid, fromToken, toToken, quoteNonce, coins]);
 
-  const flipTokens = () => { setFromIdx(toIdx); setToIdx(fromIdx); setAmount(""); };
+  const checkPrices = (a: TokenDef, b: TokenDef) => {
+    const missing: string[] = [];
+    if (priceUsd(a.symbol) === undefined) missing.push(a.symbol);
+    if (priceUsd(b.symbol) === undefined) missing.push(b.symbol);
+    if (missing.length > 0) {
+      toast({
+        title: "Price data missing",
+        description: `No live price for ${missing.join(", ")}. Quote may be inaccurate.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFromSelect = (t: TokenDef) => {
+    const next = t.symbol === toToken.symbol ? fromToken : t;
+    setFromToken(next);
+    setQuoteNonce((n) => n + 1);
+    checkPrices(next, toToken);
+  };
+  const handleToSelect = (t: TokenDef) => {
+    const next = t.symbol === fromToken.symbol ? toToken : t;
+    setToToken(next);
+    setQuoteNonce((n) => n + 1);
+    checkPrices(fromToken, next);
+  };
+  const flipTokens = () => {
+    setFromToken(toToken);
+    setToToken(fromToken);
+    setQuoteNonce((n) => n + 1);
+  };
 
   return (
     <div className="space-y-12 py-4">
@@ -87,9 +159,14 @@ const DexDiscover = () => {
               <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">You send</label>
                 <div className="flex items-center gap-2">
-                  <button className="flex items-center gap-1.5 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm font-bold">
-                    <img src={QUICK_TOKENS[fromIdx].logo} alt="" className="h-5 w-5 rounded-full" />
-                    <span className={QUICK_TOKENS[fromIdx].color}>{QUICK_TOKENS[fromIdx].symbol}</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowFromSelector(true)}
+                    className="flex items-center gap-1.5 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm font-bold hover:bg-muted/50 transition-colors"
+                  >
+                    <img src={fromToken.logo} alt="" className="h-5 w-5 rounded-full" />
+                    <span className={fromToken.color}>{fromToken.symbol}</span>
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                   <Input
                     type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)}
@@ -105,10 +182,15 @@ const DexDiscover = () => {
               <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">You receive</label>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm font-bold">
-                    <img src={QUICK_TOKENS[toIdx].logo} alt="" className="h-5 w-5 rounded-full" />
-                    <span className={QUICK_TOKENS[toIdx].color}>{QUICK_TOKENS[toIdx].symbol}</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowToSelector(true)}
+                    className="flex items-center gap-1.5 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm font-bold hover:bg-muted/50 transition-colors"
+                  >
+                    <img src={toToken.logo} alt="" className="h-5 w-5 rounded-full" />
+                    <span className={toToken.color}>{toToken.symbol}</span>
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
                   <div className="flex-1 text-right text-lg font-semibold text-foreground">
                     {result ? result.amountOut.toFixed(4) : "0.00"}
                   </div>
@@ -134,6 +216,20 @@ const DexDiscover = () => {
               )}
             </CardContent>
           </Card>
+          <TokenSelectorModal
+            open={showFromSelector}
+            onClose={() => setShowFromSelector(false)}
+            onSelect={handleFromSelect}
+            excludeSymbol={toToken.symbol}
+            tokens={allTokens}
+          />
+          <TokenSelectorModal
+            open={showToSelector}
+            onClose={() => setShowToSelector(false)}
+            onSelect={handleToSelect}
+            excludeSymbol={fromToken.symbol}
+            tokens={allTokens}
+          />
         </motion.div>
 
         {/* Live Stats */}
