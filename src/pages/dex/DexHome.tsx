@@ -9,14 +9,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TOKEN_LOGOS } from "@/lib/tokenAssets";
-import { simulateSwap, FEE_CONFIG } from "@/lib/contracts";
+import { simulateSwap, FEE_CONFIG, NATIVE_USD_PRICES } from "@/lib/contracts";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/use-toast";
+import TokenSelectorModal, { type TokenDef } from "@/components/dex/TokenSelectorModal";
+import { usePolygonMarketData, COINGECKO_IDS } from "@/hooks/usePolygonMarketData";
 
-const QUICK_TOKENS = [
-  { symbol: "BLAZE", logo: TOKEN_LOGOS.BLAZE, color: "text-blaze" },
-  { symbol: "EMBER", logo: TOKEN_LOGOS.EMBER, color: "text-ember" },
-  { symbol: "EQT", logo: TOKEN_LOGOS.EQT, color: "text-equity" },
+const NATIVE_TOKENS: TokenDef[] = [
+  { symbol: "BLAZE", name: "TwinFlame BLAZE", logo: TOKEN_LOGOS.BLAZE, balance: "0.00", color: "text-blaze" },
+  { symbol: "EMBER", name: "TwinFlame EMBER", logo: TOKEN_LOGOS.EMBER, balance: "0.00", color: "text-ember" },
+  { symbol: "EQT",   name: "TwinFlame Equity", logo: TOKEN_LOGOS.EQT,  balance: "0.00", color: "text-equity" },
 ];
 
 const FEATURED_MARKETS = [
