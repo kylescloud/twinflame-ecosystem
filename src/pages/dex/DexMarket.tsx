@@ -366,7 +366,7 @@ const DexMarket = () => {
                   {expanded.has(coin.symbol) && (
                     <TokenPoolsRow key={`${coin.symbol}-pools`} symbol={coin.symbol} colSpan={8} />
                   )}
-                </>
+                </Fragment>
               ))}
               </AnimatePresence>
               {filtered.length === 0 && (
