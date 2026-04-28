@@ -287,6 +287,7 @@ const DexMarket = () => {
             <tbody>
               <AnimatePresence mode="popLayout">
                 {visible.map((coin, i) => (
+                  <Fragment key={coin.symbol}>
                   <motion.tr
                     key={coin.symbol}
                     initial={{ opacity: 0, y: 10 }}
