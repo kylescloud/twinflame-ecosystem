@@ -9,14 +9,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TOKEN_LOGOS } from "@/lib/tokenAssets";
-import { simulateSwap, FEE_CONFIG } from "@/lib/contracts";
+import { simulateSwap, FEE_CONFIG, NATIVE_USD_PRICES } from "@/lib/contracts";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/use-toast";
+import TokenSelectorModal, { type TokenDef } from "@/components/dex/TokenSelectorModal";
+import { usePolygonMarketData, COINGECKO_IDS } from "@/hooks/usePolygonMarketData";
 
-const QUICK_TOKENS = [
-  { symbol: "BLAZE", logo: TOKEN_LOGOS.BLAZE, color: "text-blaze" },
-  { symbol: "EMBER", logo: TOKEN_LOGOS.EMBER, color: "text-ember" },
-  { symbol: "EQT", logo: TOKEN_LOGOS.EQT, color: "text-equity" },
+const NATIVE_TOKENS: TokenDef[] = [
+  { symbol: "BLAZE", name: "TwinFlame BLAZE", logo: TOKEN_LOGOS.BLAZE, balance: "0.00", color: "text-blaze" },
+  { symbol: "EMBER", name: "TwinFlame EMBER", logo: TOKEN_LOGOS.EMBER, balance: "0.00", color: "text-ember" },
+  { symbol: "EQT",   name: "TwinFlame Equity", logo: TOKEN_LOGOS.EQT,  balance: "0.00", color: "text-equity" },
 ];
 
 const FEATURED_MARKETS = [
@@ -28,18 +30,65 @@ const FEATURED_MARKETS = [
 const DexHome = () => {
   const { address, connect, isConnecting } = useWallet();
   const { toast } = useToast();
-  const [fromIdx, setFromIdx] = useState(0);
-  const [toIdx, setToIdx] = useState(1);
+  const { coins } = usePolygonMarketData();
+
+  const allTokens: TokenDef[] = useMemo(() => {
+    const market: TokenDef[] = Object.keys(COINGECKO_IDS).map((sym) => {
+      const c = coins.find((co) => co.id === COINGECKO_IDS[sym]);
+      return {
+        symbol: sym,
+        name: c?.name ?? sym,
+        logo: c?.image ?? "https://cryptologos.cc/logos/polygon-matic-logo.png?v=035",
+        balance: "0.00",
+        color: "text-foreground",
+      };
+    });
+    const seen = new Set<string>();
+    return [...NATIVE_TOKENS, ...market].filter((t) => {
+      if (seen.has(t.symbol)) return false;
+      seen.add(t.symbol);
+      return true;
+    });
+  }, [coins]);
+
+  const priceUsd = (symbol: string): number | undefined => {
+    if (NATIVE_USD_PRICES[symbol] !== undefined) return NATIVE_USD_PRICES[symbol];
+    const cgId = COINGECKO_IDS[symbol];
+    if (!cgId) return undefined;
+    const c = coins.find((co) => co.id === cgId);
+    return c?.current_price ?? undefined;
+  };
+
+  const [fromToken, setFromToken] = useState<TokenDef>(NATIVE_TOKENS[0]);
+  const [toToken, setToToken] = useState<TokenDef>(NATIVE_TOKENS[1]);
   const [amount, setAmount] = useState("");
+  const [showFromSelector, setShowFromSelector] = useState(false);
+  const [showToSelector, setShowToSelector] = useState(false);
 
   const parsed = parseFloat(amount);
   const isValid = !isNaN(parsed) && parsed > 0;
   const result = useMemo(() => {
     if (!isValid) return null;
-    return simulateSwap(QUICK_TOKENS[fromIdx].symbol, QUICK_TOKENS[toIdx].symbol, parsed);
-  }, [parsed, isValid, fromIdx, toIdx]);
+    return simulateSwap(
+      fromToken.symbol,
+      toToken.symbol,
+      parsed,
+      priceUsd(fromToken.symbol),
+      priceUsd(toToken.symbol),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsed, isValid, fromToken.symbol, toToken.symbol, coins]);
 
-  const flipTokens = () => { setFromIdx(toIdx); setToIdx(fromIdx); setAmount(""); };
+  const flipTokens = () => { const f = fromToken; setFromToken(toToken); setToToken(f); setAmount(""); };
+
+  const handleFromSelect = (t: TokenDef) => {
+    if (t.symbol === toToken.symbol) setToToken(fromToken);
+    setFromToken(t); setAmount("");
+  };
+  const handleToSelect = (t: TokenDef) => {
+    if (t.symbol === fromToken.symbol) setFromToken(toToken);
+    setToToken(t); setAmount("");
+  };
 
   return (
     <div className="space-y-12 py-4">
@@ -77,9 +126,13 @@ const DexHome = () => {
               <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">You send</label>
                 <div className="flex items-center gap-2">
-                  <button className="flex items-center gap-1.5 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm font-bold">
-                    <img src={QUICK_TOKENS[fromIdx].logo} alt="" className="h-5 w-5 rounded-full" />
-                    <span className={QUICK_TOKENS[fromIdx].color}>{QUICK_TOKENS[fromIdx].symbol}</span>
+                  <button
+                    onClick={() => setShowFromSelector(true)}
+                    className="flex items-center gap-1.5 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm font-bold transition-colors hover:bg-muted/50"
+                  >
+                    <img src={fromToken.logo} alt="" className="h-5 w-5 rounded-full" />
+                    <span className={fromToken.color}>{fromToken.symbol}</span>
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
                   </button>
                   <Input
                     type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)}
@@ -98,10 +151,14 @@ const DexHome = () => {
               <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">You receive</label>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm font-bold">
-                    <img src={QUICK_TOKENS[toIdx].logo} alt="" className="h-5 w-5 rounded-full" />
-                    <span className={QUICK_TOKENS[toIdx].color}>{QUICK_TOKENS[toIdx].symbol}</span>
-                  </div>
+                  <button
+                    onClick={() => setShowToSelector(true)}
+                    className="flex items-center gap-1.5 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm font-bold transition-colors hover:bg-muted/50"
+                  >
+                    <img src={toToken.logo} alt="" className="h-5 w-5 rounded-full" />
+                    <span className={toToken.color}>{toToken.symbol}</span>
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  </button>
                   <div className="flex-1 text-right text-lg font-semibold text-foreground">
                     {result ? result.amountOut.toFixed(4) : "0.00"}
                   </div>
@@ -214,6 +271,21 @@ const DexHome = () => {
           ))}
         </div>
       </motion.section>
+
+      <TokenSelectorModal
+        open={showFromSelector}
+        onClose={() => setShowFromSelector(false)}
+        onSelect={handleFromSelect}
+        excludeSymbol={toToken.symbol}
+        tokens={allTokens}
+      />
+      <TokenSelectorModal
+        open={showToSelector}
+        onClose={() => setShowToSelector(false)}
+        onSelect={handleToSelect}
+        excludeSymbol={fromToken.symbol}
+        tokens={allTokens}
+      />
     </div>
   );
 };
