@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
 import {
   ArrowDownUp, BarChart3, PieChart, Sprout, Landmark, Compass, Globe,
-  Wallet, Settings2, Menu, X, ChevronDown, ExternalLink, Vote,
+  Wallet, Settings2, Menu, X, ChevronDown, ExternalLink, Vote, Database,
 } from "lucide-react";
 import flameLogo from "@/assets/flame-logo.png";
 import { useWallet } from "@/hooks/useWallet";
@@ -22,6 +22,7 @@ const MORE_ITEMS = [
   { label: "Analytics", to: "/dex/analytics", icon: BarChart3 },
   { label: "History", to: "/dex/history", icon: ArrowDownUp },
   { label: "Governance", to: "/dex/governance", icon: Vote },
+  { label: "Oracle Admin", to: "/dex/oracle", icon: Database },
 ];
 
 const DexNavbar = () => {
