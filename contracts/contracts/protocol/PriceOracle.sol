@@ -12,7 +12,12 @@ contract PriceOracle is AccessControl {
     mapping(address => uint256) public manualPriceE18;
     mapping(address => uint256) public lastUpdated;
 
+    /// Enumerable registry of tokens that have ever had a price set
+    address[] public tokens;
+    mapping(address => bool) public registered;
+
     event PriceUpdated(address indexed token, uint256 priceE18, uint256 timestamp);
+    event TokenRegistered(address indexed token);
 
     error StalePrice();
 
@@ -25,21 +30,31 @@ contract PriceOracle is AccessControl {
 
     function setMaxStaleness(uint256 s) external onlyRole(DEFAULT_ADMIN_ROLE) { maxStaleness = s; }
 
+    function _register(address token) internal {
+        if (!registered[token]) {
+            registered[token] = true;
+            tokens.push(token);
+            emit TokenRegistered(token);
+        }
+    }
+
     function setPriceUSD(address token, uint256 priceE18) external onlyRole(FEEDER_ROLE) {
+        _register(token);
         manualPriceE18[token] = priceE18;
         lastUpdated[token] = block.timestamp;
         emit PriceUpdated(token, priceE18, block.timestamp);
     }
 
-    function batchSetPriceUSD(address[] calldata tokens, uint256[] calldata pricesE18)
+    function batchSetPriceUSD(address[] calldata _tokens, uint256[] calldata pricesE18)
         external
         onlyRole(FEEDER_ROLE)
     {
-        require(tokens.length == pricesE18.length, "len");
-        for (uint256 i; i < tokens.length; ++i) {
-            manualPriceE18[tokens[i]] = pricesE18[i];
-            lastUpdated[tokens[i]] = block.timestamp;
-            emit PriceUpdated(tokens[i], pricesE18[i], block.timestamp);
+        require(_tokens.length == pricesE18.length, "len");
+        for (uint256 i; i < _tokens.length; ++i) {
+            _register(_tokens[i]);
+            manualPriceE18[_tokens[i]] = pricesE18[i];
+            lastUpdated[_tokens[i]] = block.timestamp;
+            emit PriceUpdated(_tokens[i], pricesE18[i], block.timestamp);
         }
     }
 
@@ -48,5 +63,21 @@ contract PriceOracle is AccessControl {
         if (p == 0) return 0;
         if (block.timestamp - lastUpdated[token] > maxStaleness) revert StalePrice();
         return p;
+    }
+
+    /// @notice Return all registered tokens (for admin UI enumeration)
+    function getTokens() external view returns (address[] memory) { return tokens; }
+
+    function tokensLength() external view returns (uint256) { return tokens.length; }
+
+    /// @notice Full feed snapshot for the admin panel
+    function getFeed(address token)
+        external
+        view
+        returns (uint256 priceE18, uint256 updatedAt, bool stale)
+    {
+        priceE18 = manualPriceE18[token];
+        updatedAt = lastUpdated[token];
+        stale = priceE18 == 0 || (block.timestamp - updatedAt > maxStaleness);
     }
 }

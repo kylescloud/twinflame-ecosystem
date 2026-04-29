@@ -7,6 +7,11 @@ export const CONTRACTS = {
   EQT_TOKEN: "0x0000000000000000000000000000000000000003",
   TWINFLAME_SWAP: "0x0000000000000000000000000000000000000010",
   TWINFLAME_LENDING: "0x0000000000000000000000000000000000000020",
+  PRICE_ORACLE: "0x0000000000000000000000000000000000000030",
+  FEE_DISTRIBUTOR: "0x0000000000000000000000000000000000000031",
+  BLAZE_GOVERNOR: "0x0000000000000000000000000000000000000040",
+  EQT_GOVERNOR: "0x0000000000000000000000000000000000000041",
+  TIMELOCK: "0x0000000000000000000000000000000000000042",
 } as const;
 
 // ── ERC20 ABI (minimal) ──
@@ -66,7 +71,90 @@ export const LENDING_POOL_ABI = [
   "event Liquidate(uint256 indexed loanId, address indexed liquidator)",
   "event LoanOfferCreated(uint256 indexed offerId, address indexed lender)",
   "event LoanOfferFilled(uint256 indexed offerId, uint256 indexed loanId, address indexed borrower)",
+  // Production lending views
+  "function amountOwed(uint256 loanId) view returns (uint256)",
+  "function healthFactor(uint256 loanId) view returns (uint256 hfE18)",
+  "function userHealthFactor(address user) view returns (uint256 hfE18)",
+  "function maxBorrow(address token, address collateralToken, uint256 collateralAmount) view returns (uint256)",
+  "function previewLiquidation(uint256 loanId) view returns (uint256 owed, uint256 toLiquidator, uint256 refund)",
+  "function loansLength() view returns (uint256)",
+  "function offersLength() view returns (uint256)",
+  "function getUserLoans(address user) view returns (uint256[])",
+  "function collateralFactorBps() view returns (uint16)",
+  "function liquidationThresholdBps() view returns (uint16)",
 ];
+
+// ── Price Oracle ABI ──
+export const ORACLE_ABI = [
+  "function getPriceUSD(address token) view returns (uint256 priceE18)",
+  "function getFeed(address token) view returns (uint256 priceE18, uint256 updatedAt, bool stale)",
+  "function getTokens() view returns (address[])",
+  "function tokensLength() view returns (uint256)",
+  "function maxStaleness() view returns (uint256)",
+  "function setPriceUSD(address token, uint256 priceE18)",
+  "function batchSetPriceUSD(address[] tokens, uint256[] pricesE18)",
+  "function setMaxStaleness(uint256 s)",
+  "function hasRole(bytes32 role, address account) view returns (bool)",
+  "function FEEDER_ROLE() view returns (bytes32)",
+  "event PriceUpdated(address indexed token, uint256 priceE18, uint256 timestamp)",
+];
+
+// ── OpenZeppelin Governor ABI (BLAZE + EQT governors share interface) ──
+export const GOVERNOR_ABI = [
+  "function name() view returns (string)",
+  "function votingDelay() view returns (uint256)",
+  "function votingPeriod() view returns (uint256)",
+  "function proposalThreshold() view returns (uint256)",
+  "function quorum(uint256 blockNumber) view returns (uint256)",
+  "function state(uint256 proposalId) view returns (uint8)",
+  "function proposalSnapshot(uint256 proposalId) view returns (uint256)",
+  "function proposalDeadline(uint256 proposalId) view returns (uint256)",
+  "function proposalEta(uint256 proposalId) view returns (uint256)",
+  "function proposalProposer(uint256 proposalId) view returns (address)",
+  "function proposalVotes(uint256 proposalId) view returns (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes)",
+  "function proposalNeedsQueuing(uint256 proposalId) view returns (bool)",
+  "function hashProposal(address[] targets, uint256[] values, bytes[] calldatas, bytes32 descriptionHash) view returns (uint256)",
+  "function hasVoted(uint256 proposalId, address account) view returns (bool)",
+  "function getVotes(address account, uint256 blockNumber) view returns (uint256)",
+  "function propose(address[] targets, uint256[] values, bytes[] calldatas, string description) returns (uint256)",
+  "function castVote(uint256 proposalId, uint8 support) returns (uint256)",
+  "function castVoteWithReason(uint256 proposalId, uint8 support, string reason) returns (uint256)",
+  "function queue(address[] targets, uint256[] values, bytes[] calldatas, bytes32 descriptionHash) returns (uint256)",
+  "function execute(address[] targets, uint256[] values, bytes[] calldatas, bytes32 descriptionHash) payable returns (uint256)",
+  "function cancel(address[] targets, uint256[] values, bytes[] calldatas, bytes32 descriptionHash) returns (uint256)",
+  "event ProposalCreated(uint256 proposalId, address proposer, address[] targets, uint256[] values, string[] signatures, bytes[] calldatas, uint256 voteStart, uint256 voteEnd, string description)",
+  "event ProposalQueued(uint256 proposalId, uint256 etaSeconds)",
+  "event ProposalExecuted(uint256 proposalId)",
+  "event ProposalCanceled(uint256 proposalId)",
+  "event VoteCast(address indexed voter, uint256 proposalId, uint8 support, uint256 weight, string reason)",
+];
+
+// ── OpenZeppelin TimelockController ABI ──
+export const TIMELOCK_ABI = [
+  "function getMinDelay() view returns (uint256)",
+  "function isOperation(bytes32 id) view returns (bool)",
+  "function isOperationPending(bytes32 id) view returns (bool)",
+  "function isOperationReady(bytes32 id) view returns (bool)",
+  "function isOperationDone(bytes32 id) view returns (bool)",
+  "function getTimestamp(bytes32 id) view returns (uint256)",
+];
+
+// ── Governor proposal-state enum (matches IGovernor.ProposalState) ──
+export const PROPOSAL_STATE = [
+  "Pending", "Active", "Canceled", "Defeated", "Succeeded",
+  "Queued", "Expired", "Executed",
+] as const;
+export type ProposalStateName = typeof PROPOSAL_STATE[number];
+
+// ── Vote support enum (GovernorCountingSimple) ──
+export const VOTE_SUPPORT = { Against: 0, For: 1, Abstain: 2 } as const;
+
+// ── Health factor color tier (frontend gauge) ──
+export function healthFactorTier(hf: number): "safe" | "warn" | "danger" {
+  if (hf >= 1.5) return "safe";
+  if (hf >= 1.2) return "warn";
+  return "danger";
+}
 
 // ── Token Metadata ──
 export const TOKEN_INFO = {

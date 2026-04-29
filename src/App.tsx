@@ -26,6 +26,7 @@ import DexAnalytics from "./pages/dex/DexAnalytics";
 import DexHistory from "./pages/dex/DexHistory";
 import DexGovernance from "./pages/dex/DexGovernance";
 import DexTokenDetail from "./pages/dex/DexTokenDetail";
+import DexOracle from "./pages/dex/DexOracle";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="analytics" element={<DexAnalytics />} />
             <Route path="history" element={<DexHistory />} />
             <Route path="governance" element={<DexGovernance />} />
+            <Route path="oracle" element={<DexOracle />} />
             <Route path="token/:tokenId" element={<DexTokenDetail />} />
             {/* Legacy redirects */}
             <Route path="markets" element={<Navigate to="/dex/lend" replace />} />
