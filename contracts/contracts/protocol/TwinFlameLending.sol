@@ -290,12 +290,42 @@ contract TwinFlameLending is AccessControl, ReentrancyGuard, Pausable {
             IERC20(L.token).safeTransfer(L.lender, owed);
         }
 
-        uint256 bonus = (L.collateralAmount * liquidationBonusBps) / BPS;
-        uint256 toLiquidator = L.collateralAmount; // simplified: full collateral
+        // ── Fair seizure: liquidator receives debt-equivalent collateral + bonus, rest refunded
+        (uint256 toLiquidator, uint256 refund) = _previewLiquidation(L, owed);
         L.liquidated = true;
         IERC20(L.collateralToken).safeTransfer(msg.sender, toLiquidator);
+        if (refund > 0) IERC20(L.collateralToken).safeTransfer(L.borrower, refund);
         emit Liquidated(loanId, msg.sender, toLiquidator);
-        bonus; // silence unused in simplified path
+    }
+
+    function _previewLiquidation(Loan storage L, uint256 owed)
+        internal
+        view
+        returns (uint256 toLiquidator, uint256 refund)
+    {
+        uint256 debtUsd = _usd(L.token, owed);
+        uint256 colPriceE18 = oracle.getPriceUSD(L.collateralToken);
+        if (colPriceE18 == 0) revert NoPriceData();
+        // collateral units required to cover debt: debtUsd / colPriceE18 (both 1e18 scaled USD)
+        uint256 colForDebt = (debtUsd * 1e18) / colPriceE18;
+        uint256 bonus = (colForDebt * liquidationBonusBps) / BPS;
+        toLiquidator = colForDebt + bonus;
+        if (toLiquidator >= L.collateralAmount) {
+            toLiquidator = L.collateralAmount;
+            refund = 0;
+        } else {
+            refund = L.collateralAmount - toLiquidator;
+        }
+    }
+
+    function previewLiquidation(uint256 loanId)
+        external
+        view
+        returns (uint256 owed, uint256 toLiquidator, uint256 refund)
+    {
+        Loan storage L = loans[loanId];
+        owed = _amountOwed(L);
+        (toLiquidator, refund) = _previewLiquidation(L, owed);
     }
 
     // ── Views & Health ──
@@ -350,5 +380,40 @@ contract TwinFlameLending is AccessControl, ReentrancyGuard, Pausable {
         uint256 colUsd = _usd(L.collateralToken, L.collateralAmount);
         // HF = (colUsd * liqThreshold/BPS) / borrowUsd, scaled 1e18
         hfE18 = (colUsd * liquidationThresholdBps * 1e18) / (borrowUsd * BPS);
+    }
+
+    /// @notice Live owed (principal + linear interest) for a loan
+    function amountOwed(uint256 loanId) external view returns (uint256) {
+        return _amountOwed(loans[loanId]);
+    }
+
+    /// @notice Aggregate health factor across all of a user's open loans, scaled 1e18.
+    /// @dev    HF = Σ(collateralUsd × liqThresholdBps) / Σ(borrowUsdOwed × BPS).
+    ///         Returns type(uint256).max if user has no open debt.
+    function userHealthFactor(address user) external view returns (uint256 hfE18) {
+        uint256[] memory ids = userLoans[user];
+        uint256 totalBorrowUsd;
+        uint256 totalColAdjUsd;
+        for (uint256 i; i < ids.length; ++i) {
+            Loan storage L = loans[ids[i]];
+            if (L.repaid || L.liquidated) continue;
+            totalBorrowUsd += _usd(L.token, _amountOwed(L));
+            totalColAdjUsd += _usd(L.collateralToken, L.collateralAmount) * liquidationThresholdBps;
+        }
+        if (totalBorrowUsd == 0) return type(uint256).max;
+        hfE18 = (totalColAdjUsd * 1e18) / (totalBorrowUsd * BPS);
+    }
+
+    /// @notice Max borrow amount of `token` given posted `collateralAmount` of `collateralToken`.
+    function maxBorrow(address token, address collateralToken, uint256 collateralAmount)
+        external
+        view
+        returns (uint256)
+    {
+        uint256 colUsd = _usd(collateralToken, collateralAmount);
+        uint256 maxBorrowUsd = (colUsd * collateralFactorBps) / BPS;
+        uint256 priceE18 = oracle.getPriceUSD(token);
+        if (priceE18 == 0) revert NoPriceData();
+        return (maxBorrowUsd * 1e18) / priceE18;
     }
 }
