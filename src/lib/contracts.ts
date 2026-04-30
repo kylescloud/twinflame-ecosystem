@@ -51,6 +51,8 @@ export const LENDING_POOL_ABI = [
   "function borrow(address token, uint256 amount, address collateralToken, uint256 collateralAmount) returns (uint256 loanId)",
   "function repay(uint256 loanId) returns (bool)",
   "function liquidate(uint256 loanId) returns (bool)",
+  "function liquidate(uint256 loanId, uint256 repayAmount)",
+  "function previewPartialLiquidation(uint256 loanId, uint256 repayAmount) view returns (uint256 effectiveRepay, uint256 toLiquidator, uint256 refund)",
   // P2P lending
   "function createLoanOffer(address token, uint256 amount, uint256 interestRate, uint256 duration, address collateralToken, uint256 minCollateral) returns (uint256 offerId)",
   "function fillLoanOffer(uint256 offerId, address collateralToken, uint256 collateralAmount) returns (uint256 loanId)",
