@@ -10,6 +10,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/use-toast";
 import AssetDetailModal from "@/components/dex/AssetDetailModal";
 import LendingPanel from "@/components/dex/LendingPanel";
+import MyLoansPanel from "@/components/dex/MyLoansPanel";
 
 const POOLED_MARKETS = [
   { symbol: "BLAZE", logo: TOKEN_LOGOS.BLAZE, totalSupplied: 2450000, totalBorrowed: 1127000, supplyAPY: 4.2, borrowAPY: 8.5, utilization: 46, collateralFactor: 75, liquidationThreshold: 120, category: "volatile" as const },
@@ -99,6 +100,9 @@ const DexLend = () => {
           </Card>
         ))}
       </div>
+
+      {/* On-chain loan dashboard — uses contract view functions */}
+      <MyLoansPanel />
 
       {/* Production lending panel — supply / borrow / repay / liquidate with live HF */}
       <LendingPanel />
