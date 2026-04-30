@@ -298,6 +298,46 @@ contract TwinFlameLending is AccessControl, ReentrancyGuard, Pausable {
         emit Liquidated(loanId, msg.sender, toLiquidator);
     }
 
+    /// @notice Partial liquidation: caller repays `repayAmount` of debt token and seizes a
+    ///         proportional slice of collateral + bonus. Loan is marked liquidated only if
+    ///         the position becomes fully repaid.
+    /// @dev    Shares the fair-seizure math with the full-liquidation path via _previewPartial.
+    function liquidate(uint256 loanId, uint256 repayAmount) external nonReentrant {
+        Loan storage L = loans[loanId];
+        if (L.repaid || L.liquidated) revert AlreadySettled();
+        if (_isHealthy(L)) revert HealthyPosition();
+        if (repayAmount == 0) revert InvalidAmount();
+
+        (uint256 effectiveRepay, uint256 toLiquidator, uint256 refund) = _previewPartial(L, repayAmount);
+
+        IERC20(L.token).safeTransferFrom(msg.sender, address(this), effectiveRepay);
+
+        // Update accounting based on principal share repaid
+        uint256 owed = _amountOwed(L);
+        uint256 principalRepaid = (L.amount * effectiveRepay) / owed;
+        if (principalRepaid > L.amount) principalRepaid = L.amount;
+
+        if (L.kind == LoanKind.Pool) {
+            pools[L.token].totalBorrowed -= principalRepaid;
+        } else {
+            IERC20(L.token).safeTransfer(L.lender, effectiveRepay);
+        }
+
+        L.amount -= principalRepaid;
+        L.collateralAmount -= toLiquidator;
+        // Reset interest clock proportionally by re-anchoring start time when partial
+        L.startTime = block.timestamp;
+
+        bool fullyRepaid = (L.amount == 0);
+        if (fullyRepaid) {
+            L.liquidated = true;
+            if (refund > 0) IERC20(L.collateralToken).safeTransfer(L.borrower, refund);
+        }
+        IERC20(L.collateralToken).safeTransfer(msg.sender, toLiquidator);
+
+        emit Liquidated(loanId, msg.sender, toLiquidator);
+    }
+
     function _previewLiquidation(Loan storage L, uint256 owed)
         internal
         view
@@ -318,6 +358,28 @@ contract TwinFlameLending is AccessControl, ReentrancyGuard, Pausable {
         }
     }
 
+    /// @dev Caps repay at total owed, then computes proportional collateral seizure + bonus.
+    function _previewPartial(Loan storage L, uint256 repayAmount)
+        internal
+        view
+        returns (uint256 effectiveRepay, uint256 toLiquidator, uint256 refund)
+    {
+        uint256 owed = _amountOwed(L);
+        effectiveRepay = repayAmount > owed ? owed : repayAmount;
+
+        uint256 debtUsd = _usd(L.token, effectiveRepay);
+        uint256 colPriceE18 = oracle.getPriceUSD(L.collateralToken);
+        if (colPriceE18 == 0) revert NoPriceData();
+        uint256 colForDebt = (debtUsd * 1e18) / colPriceE18;
+        uint256 bonus = (colForDebt * liquidationBonusBps) / BPS;
+        toLiquidator = colForDebt + bonus;
+        if (toLiquidator > L.collateralAmount) toLiquidator = L.collateralAmount;
+        // Refund only meaningful when fully repaying
+        refund = (effectiveRepay == owed && L.collateralAmount > toLiquidator)
+            ? L.collateralAmount - toLiquidator
+            : 0;
+    }
+
     function previewLiquidation(uint256 loanId)
         external
         view
@@ -326,6 +388,19 @@ contract TwinFlameLending is AccessControl, ReentrancyGuard, Pausable {
         Loan storage L = loans[loanId];
         owed = _amountOwed(L);
         (toLiquidator, refund) = _previewLiquidation(L, owed);
+    }
+
+    /// @notice Preview a partial liquidation for an arbitrary repay amount.
+    /// @return effectiveRepay The repay amount actually applied (capped at owed).
+    /// @return toLiquidator   Collateral the liquidator would receive (incl. bonus, capped).
+    /// @return refund         Collateral refunded to borrower (only when fully closing the loan).
+    function previewPartialLiquidation(uint256 loanId, uint256 repayAmount)
+        external
+        view
+        returns (uint256 effectiveRepay, uint256 toLiquidator, uint256 refund)
+    {
+        Loan storage L = loans[loanId];
+        return _previewPartial(L, repayAmount);
     }
 
     // ── Views & Health ──
