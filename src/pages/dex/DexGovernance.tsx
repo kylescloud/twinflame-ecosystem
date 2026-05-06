@@ -187,13 +187,14 @@ function ProposalCard({ p, governorAddress, isLive, isConnected, account, onConn
   const quorumMet = quorumN > 0 && total >= quorumN;
   const etaReady = p.etaUnix > 0 && p.etaUnix <= nowSec();
 
-  const run = async (label: string, fn: () => Promise<any>) => {
+  const run = async (label: string, fn: () => Promise<any>, onSuccess?: (tx: any) => void) => {
     if (!isConnected) { onConnect(); return; }
     setBusy(label);
     try {
       if (!isLive) {
         await new Promise((r) => setTimeout(r, 600));
         toast({ title: `Simulated: ${label}`, description: "Contract not deployed — would execute on-chain." });
+        onSuccess?.({ hash: "0xsimulated" });
         onAction();
         return;
       }
@@ -204,6 +205,7 @@ function ProposalCard({ p, governorAddress, isLive, isConnected, account, onConn
       });
       await tx.wait();
       toast({ title: `${label} confirmed`, description: `Proposal ${p.shortId}` });
+      onSuccess?.(tx);
       onAction();
     } catch (e: any) {
       toast({
@@ -217,7 +219,22 @@ function ProposalCard({ p, governorAddress, isLive, isConnected, account, onConn
   };
 
   const vote = (support: 0 | 1 | 2, label: string) =>
-    run(label, () => castVoteTx(governorAddress, p.proposalId, support, reason));
+    run(
+      label,
+      () => castVoteTx(governorAddress, p.proposalId, support, reason),
+      (tx) => {
+        if (account) {
+          saveVoteRecord({
+            governor: governorAddress,
+            proposalId: p.proposalId,
+            account,
+            support,
+            reason: reason.trim(),
+            txHash: tx?.hash,
+          });
+        }
+      },
+    );
 
   const queueP = () =>
     run("Queue", () => queueTx(governorAddress, p.targets, p.values, p.calldatas, p.descriptionHash));
