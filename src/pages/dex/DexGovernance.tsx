@@ -18,6 +18,8 @@ import {
   castVoteTx, queueTx, executeTx, cancelTx, delegateTx,
 } from "@/hooks/useLiveGovernor";
 import CreateProposalModal from "@/components/dex/CreateProposalModal";
+import ProposalDetailsDrawer from "@/components/dex/ProposalDetailsDrawer";
+import { saveVoteRecord, getVoteRecord, SUPPORT_LABEL } from "@/lib/voteHistory";
 import { formatUnits } from "ethers";
 
 // ── helpers ────────────────────────────────────────────────────────────────
