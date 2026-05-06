@@ -308,13 +308,17 @@ function ProposalCard({ p, governorAddress, isLive, isConnected, account, onConn
 
         {/* Actions block (for Active proposals) */}
         {p.state === "Active" && showReason && (
-          <Textarea
-            placeholder="Optional vote reason…"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            rows={2}
-            className="mb-2 text-xs"
-          />
+          <div className="mb-2 space-y-1">
+            <Textarea
+              placeholder="Optional vote reason — submitted on-chain via castVoteWithReason()"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={2}
+              maxLength={500}
+              className="text-xs"
+            />
+            <p className="text-right text-[10px] text-muted-foreground">{reason.length}/500</p>
+          </div>
         )}
 
         {/* Footer */}
@@ -327,6 +331,10 @@ function ProposalCard({ p, governorAddress, isLive, isConnected, account, onConn
             <span>· ends #{p.voteEnd.toLocaleString()}</span>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="ghost" className="h-7 text-[10px] text-muted-foreground hover:text-primary"
+              onClick={() => onOpenDetails(p)}>
+              Details
+            </Button>
             {p.state === "Active" && !p.hasVoted && (
               <>
                 <Button size="sm" variant="ghost" className="h-7 text-[10px]" onClick={() => setShowReason((v) => !v)}>
