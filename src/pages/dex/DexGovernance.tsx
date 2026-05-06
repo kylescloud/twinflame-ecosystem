@@ -417,6 +417,7 @@ function GovernorPanel({
   const live = useLiveGovernor(kind, account);
   const [showCreate, setShowCreate] = useState(false);
   const [delegating, setDelegating] = useState(false);
+  const [details, setDetails] = useState<LiveProposal | null>(null);
 
   const proposals: LiveProposal[] = useMemo(() => {
     if (live.isLive) return live.proposals;
@@ -520,8 +521,10 @@ function GovernorPanel({
             governorAddress={live.governorAddress}
             isLive={live.isLive}
             isConnected={!!account}
+            account={account}
             onConnect={onConnect}
             onAction={() => live.refresh()}
+            onOpenDetails={(prop) => setDetails(prop)}
           />
         ))
       )}
