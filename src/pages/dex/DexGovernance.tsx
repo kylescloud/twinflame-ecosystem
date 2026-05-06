@@ -556,6 +556,7 @@ const DexGovernance = () => {
   const { address, connect, isConnecting } = useWallet();
   const blaze = useLiveGovernor("blaze", address);
   const eqt = useLiveGovernor("eqt", address);
+  const [historyDetails, setHistoryDetails] = useState<{ p: LiveProposal; gov: string; label: string; isLive: boolean } | null>(null);
 
   const allProposals = useMemo(() => {
     const b = blaze.isLive ? blaze.proposals : buildSimProposals("blaze");
@@ -645,39 +646,79 @@ const DexGovernance = () => {
             </Card>
           ) : (
             <>
-              {[...(blaze.isLive ? blaze.proposals : buildSimProposals("blaze")),
-                ...(eqt.isLive ? eqt.proposals : buildSimProposals("eqt"))]
-                .filter((p) => p.hasVoted || p.proposer.toLowerCase() === address.toLowerCase())
-                .map((p) => (
-                  <Card key={p.proposalId} className="border-border/40 bg-card/60">
-                    <CardContent className="flex items-center justify-between gap-3 p-4">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs text-muted-foreground">#{p.shortId}</span>
-                          <span className="truncate text-sm font-medium text-foreground">{p.title}</span>
+              {(() => {
+                const blazeList = (blaze.isLive ? blaze.proposals : buildSimProposals("blaze")).map((p) => ({
+                  p, gov: blaze.governorAddress, label: "BLAZE Governor", isLive: blaze.isLive,
+                }));
+                const eqtList = (eqt.isLive ? eqt.proposals : buildSimProposals("eqt")).map((p) => ({
+                  p, gov: eqt.governorAddress, label: "EQT Governor", isLive: eqt.isLive,
+                }));
+                const items = [...blazeList, ...eqtList].filter(({ p }) =>
+                  p.hasVoted ||
+                  p.proposer.toLowerCase() === address.toLowerCase() ||
+                  !!getVoteRecord(blaze.governorAddress, p.proposalId, address) ||
+                  !!getVoteRecord(eqt.governorAddress, p.proposalId, address),
+                );
+                if (items.length === 0) {
+                  return (
+                    <Card className="border-border/40 bg-card/60">
+                      <CardContent className="p-6 text-center text-sm text-muted-foreground">
+                        No governance activity yet. Vote on an active proposal or submit one.
+                      </CardContent>
+                    </Card>
+                  );
+                }
+                return items.map(({ p, gov, label, isLive }) => {
+                  const rec = getVoteRecord(gov, p.proposalId, address);
+                  const isProposer = p.proposer.toLowerCase() === address.toLowerCase();
+                  return (
+                    <Card key={`${gov}-${p.proposalId}`} className="border-border/40 bg-card/60">
+                      <CardContent className="space-y-2 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs text-muted-foreground">#{p.shortId}</span>
+                              <span className="truncate text-sm font-medium text-foreground">{p.title}</span>
+                            </div>
+                            <p className="mt-0.5 text-[11px] text-muted-foreground">
+                              {isProposer ? "You proposed" : rec ? `You voted ${SUPPORT_LABEL[rec.support]}` : "You voted"} · state: {p.state}
+                              {rec && <span> · {new Date(rec.ts).toLocaleDateString()}</span>}
+                            </p>
+                          </div>
+                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${STATE_CFG[p.state].bg} ${STATE_CFG[p.state].color}`}>
+                            {p.state}
+                          </span>
                         </div>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {p.proposer.toLowerCase() === address.toLowerCase() ? "You proposed" : "You voted"} · state: {p.state}
-                        </p>
-                      </div>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${STATE_CFG[p.state].bg} ${STATE_CFG[p.state].color}`}>
-                        {p.state}
-                      </span>
-                    </CardContent>
-                  </Card>
-                ))}
-              {[...blaze.proposals, ...eqt.proposals].filter((p) => p.hasVoted || p.proposer.toLowerCase() === address.toLowerCase()).length === 0 &&
-                blaze.isLive && eqt.isLive && (
-                <Card className="border-border/40 bg-card/60">
-                  <CardContent className="p-6 text-center text-sm text-muted-foreground">
-                    No governance activity yet. Vote on an active proposal or submit one.
-                  </CardContent>
-                </Card>
-              )}
+                        {rec?.reason && (
+                          <p className="whitespace-pre-line rounded-md border border-border/40 bg-background/40 p-2 text-xs italic text-foreground/80">
+                            “{rec.reason}”
+                          </p>
+                        )}
+                        <div className="flex justify-end">
+                          <Button size="sm" variant="ghost" className="h-7 text-[11px]"
+                            onClick={() => setHistoryDetails({ p, gov, label, isLive })}>
+                            View details
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                });
+              })()}
             </>
           )}
         </TabsContent>
       </Tabs>
+
+      <ProposalDetailsDrawer
+        open={!!historyDetails}
+        onOpenChange={(v) => !v && setHistoryDetails(null)}
+        proposal={historyDetails?.p ?? null}
+        governorAddress={historyDetails?.gov ?? ""}
+        governorLabel={historyDetails?.label ?? ""}
+        isLive={historyDetails?.isLive ?? false}
+        account={address}
+      />
     </div>
   );
 };
