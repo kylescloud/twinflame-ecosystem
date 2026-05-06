@@ -163,11 +163,13 @@ interface CardProps {
   governorAddress: string;
   isLive: boolean;
   isConnected: boolean;
+  account: string | null;
   onConnect: () => void;
   onAction: () => void;
+  onOpenDetails: (p: LiveProposal) => void;
 }
 
-function ProposalCard({ p, governorAddress, isLive, isConnected, onConnect, onAction }: CardProps) {
+function ProposalCard({ p, governorAddress, isLive, isConnected, account, onConnect, onAction, onOpenDetails }: CardProps) {
   const { toast } = useToast();
   const [busy, setBusy] = useState<string | null>(null);
   const [reason, setReason] = useState("");
