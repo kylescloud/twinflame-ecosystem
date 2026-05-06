@@ -537,6 +537,16 @@ function GovernorPanel({
         isLive={live.isLive}
         onSubmitted={() => live.refresh()}
       />
+
+      <ProposalDetailsDrawer
+        open={!!details}
+        onOpenChange={(v) => !v && setDetails(null)}
+        proposal={details}
+        governorAddress={live.governorAddress}
+        governorLabel={params.label}
+        isLive={live.isLive}
+        account={account}
+      />
     </div>
   );
 }
